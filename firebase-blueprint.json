@@ -1,0 +1,270 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information created on first sign-in",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The Firebase Auth user UID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "User avatar URL"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of account creation"
+        }
+      },
+      "required": ["userId", "email"]
+    },
+    "UserTopicState": {
+      "title": "UserTopicState",
+      "description": "User study tracking and visit count for a specific syllabus topic",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID"
+        },
+        "topicId": {
+          "type": "string",
+          "description": "Unique identifier of the concept/topic"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["not_studied", "learning", "needs_revision", "learned"],
+          "description": "Learning status self-reported by the user"
+        },
+        "visitCount": {
+          "type": "number",
+          "description": "Number of times user has viewed this topic note"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["userId", "topicId", "status", "visitCount"]
+    },
+    "UserCustomNote": {
+      "title": "UserCustomNote",
+      "description": "Personal note or edited note created by the student",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID"
+        },
+        "topicId": {
+          "type": "string",
+          "description": "Note identifier"
+        },
+        "title": {
+          "type": "string",
+          "description": "Note title"
+        },
+        "content": {
+          "type": "string",
+          "description": "Markdown body content"
+        },
+        "folderId": {
+          "type": "string",
+          "description": "Parent folder (e.g. personal, unsorted)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["userId", "topicId", "title", "content"]
+    },
+    "TopicRating": {
+      "title": "TopicRating",
+      "description": "1 to 5 star rating submitted by a user for a specific topic",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique rating identifier (composite userId_topicId or generated)"
+        },
+        "topicId": {
+          "type": "string",
+          "description": "The topic being rated"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Author UID"
+        },
+        "userName": {
+          "type": "string",
+          "description": "Author display name or email"
+        },
+        "rating": {
+          "type": "number",
+          "description": "Rating score from 1 to 5 stars"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of rating creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last rating update"
+        }
+      },
+      "required": ["topicId", "userId", "rating"]
+    },
+    "FeedbackReport": {
+      "title": "FeedbackReport",
+      "description": "Academic issue report or feedback submitted by a student or teacher",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique report identifier"
+        },
+        "topicId": {
+          "type": "string",
+          "description": "ID of the topic being reported on"
+        },
+        "topicTitle": {
+          "type": "string",
+          "description": "Title of the associated topic"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["error", "unclear", "missing_prereq", "missing_example", "poor_resource", "graph_connection"],
+          "description": "Issue classification category"
+        },
+        "reporterRole": {
+          "type": "string",
+          "enum": ["student", "teacher"],
+          "description": "Role of the feedback author"
+        },
+        "reporterId": {
+          "type": "string",
+          "description": "UID of author"
+        },
+        "reporterName": {
+          "type": "string",
+          "description": "Display name of reporter"
+        },
+        "comment": {
+          "type": "string",
+          "description": "Detailed explanation of the issue"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "under_review", "resolved", "rejected"],
+          "description": "Review workflow status"
+        },
+        "reviewerNotes": {
+          "type": "string",
+          "description": "Notes added by academic reviewer"
+        },
+        "reviewedBy": {
+          "type": "string",
+          "description": "Name or UID of reviewer"
+        },
+        "reviewedAt": {
+          "type": "string",
+          "description": "ISO timestamp when report was reviewed"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of report submission"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last modification"
+        }
+      },
+      "required": ["topicId", "topicTitle", "category", "reporterRole", "reporterId", "comment", "status"]
+    },
+    "TopicReviewMeta": {
+      "title": "TopicReviewMeta",
+      "description": "Aggregated review metadata, last-reviewed date, and average ratings for a topic",
+      "type": "object",
+      "properties": {
+        "topicId": {
+          "type": "string",
+          "description": "Topic identifier"
+        },
+        "lastReviewedAt": {
+          "type": "string",
+          "description": "ISO timestamp when the topic was last academically reviewed"
+        },
+        "reviewedBy": {
+          "type": "string",
+          "description": "Reviewer name or designation"
+        },
+        "reviewNotes": {
+          "type": "string",
+          "description": "Latest review summary"
+        },
+        "averageRating": {
+          "type": "number",
+          "description": "Current average rating score across all users"
+        },
+        "totalRatings": {
+          "type": "number",
+          "description": "Count of rating submissions"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["topicId", "lastReviewedAt", "averageRating", "totalRatings"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores user profile and account details"
+    },
+    "/users/{userId}/topic_states/{topicId}": {
+      "schema": {
+        "$ref": "#/entities/UserTopicState"
+      },
+      "description": "Stores user learning statuses and visit counts per topic"
+    },
+    "/users/{userId}/custom_notes/{noteId}": {
+      "schema": {
+        "$ref": "#/entities/UserCustomNote"
+      },
+      "description": "Stores user personal notes and edits"
+    },
+    "/topic_ratings/{ratingId}": {
+      "schema": {
+        "$ref": "#/entities/TopicRating"
+      },
+      "description": "Shared collection of 1-5 star ratings for syllabus topics"
+    },
+    "/feedback_reports/{reportId}": {
+      "schema": {
+        "$ref": "#/entities/FeedbackReport"
+      },
+      "description": "Shared collection of academic feedback and issue reports"
+    },
+    "/topic_reviews/{topicId}": {
+      "schema": {
+        "$ref": "#/entities/TopicReviewMeta"
+      },
+      "description": "Shared metadata for last-reviewed dates and aggregated ratings per topic"
+    }
+  }
+}

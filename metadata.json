@@ -1,0 +1,6 @@
+{
+  "name": "Anvay",
+  "description": "An Obsidian-inspired student second brain and interconnected knowledge graph for learning Functional Materials and academic concepts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

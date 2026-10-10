@@ -1,0 +1,161 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all unknown paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['userId', 'email'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.email is string
+        && data.email.size() <= 256;
+    }
+
+    function isValidTopicState(data) {
+      return data.keys().hasAll(['userId', 'topicId', 'status', 'visitCount'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.topicId is string
+        && data.topicId.size() <= 128
+        && data.status is string
+        && (data.status == 'not_studied' || data.status == 'learning' || data.status == 'needs_revision' || data.status == 'learned')
+        && data.visitCount is number
+        && data.visitCount >= 0;
+    }
+
+    function isValidCustomNote(data) {
+      return data.keys().hasAll(['userId', 'topicId', 'title', 'content'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.topicId is string
+        && data.topicId.size() <= 128
+        && data.title is string
+        && data.title.size() <= 200
+        && data.content is string
+        && data.content.size() <= 100000;
+    }
+
+    function isValidTopicRating(data) {
+      return data.keys().hasAll(['topicId', 'userId', 'rating'])
+        && data.topicId is string
+        && data.topicId.size() <= 128
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.rating is number
+        && data.rating >= 1
+        && data.rating <= 5;
+    }
+
+    function isValidFeedbackReport(data) {
+      return data.keys().hasAll(['topicId', 'topicTitle', 'category', 'reporterRole', 'reporterId', 'comment', 'status'])
+        && data.topicId is string
+        && data.topicId.size() <= 128
+        && data.topicTitle is string
+        && data.topicTitle.size() <= 250
+        && data.category is string
+        && (data.category == 'error' || data.category == 'unclear' || data.category == 'missing_prereq' || data.category == 'missing_example' || data.category == 'poor_resource' || data.category == 'graph_connection')
+        && data.reporterRole is string
+        && (data.reporterRole == 'student' || data.reporterRole == 'teacher')
+        && data.reporterId is string
+        && data.reporterId.size() <= 128
+        && data.comment is string
+        && data.comment.size() <= 5000
+        && data.status is string
+        && (data.status == 'pending' || data.status == 'under_review' || data.status == 'resolved' || data.status == 'rejected');
+    }
+
+    function isValidTopicReviewMeta(data) {
+      return data.keys().hasAll(['topicId', 'lastReviewedAt', 'averageRating', 'totalRatings'])
+        && data.topicId is string
+        && data.topicId.size() <= 128
+        && data.lastReviewedAt is string
+        && data.lastReviewedAt.size() <= 64
+        && data.averageRating is number
+        && data.averageRating >= 0
+        && data.averageRating <= 5
+        && data.totalRatings is number
+        && data.totalRatings >= 0;
+    }
+
+    // User document path
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && isValidUserProfile(request.resource.data);
+      allow update: if isOwner(userId) 
+        && isValidUserProfile(request.resource.data) 
+        && request.resource.data.userId == resource.data.userId;
+      allow delete: if isOwner(userId);
+
+      // Subcollection for user's topic statuses and visit counts
+      match /topic_states/{topicId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) 
+          && isValidId(topicId) 
+          && isValidTopicState(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+
+      // Subcollection for user's custom personal notes
+      match /custom_notes/{noteId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) 
+          && isValidId(noteId) 
+          && isValidCustomNote(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // Shared collection: Topic Ratings (1-5 stars)
+    match /topic_ratings/{ratingId} {
+      allow read: if true;
+      allow create: if isSignedIn() 
+        && isValidId(ratingId)
+        && isValidTopicRating(request.resource.data);
+      allow update: if isSignedIn() 
+        && isValidId(ratingId)
+        && isValidTopicRating(request.resource.data)
+        && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Shared collection: Feedback & Issue Reports
+    match /feedback_reports/{reportId} {
+      allow read: if true;
+      allow create: if isSignedIn() 
+        && isValidId(reportId)
+        && isValidFeedbackReport(request.resource.data)
+        && request.resource.data.reporterId == request.auth.uid;
+      allow update: if isSignedIn() 
+        && isValidId(reportId)
+        && isValidFeedbackReport(request.resource.data);
+      allow delete: if isSignedIn() && resource.data.reporterId == request.auth.uid;
+    }
+
+    // Shared collection: Topic Review Metadata & Last Reviewed Dates
+    match /topic_reviews/{topicId} {
+      allow read: if true;
+      allow create, update: if isSignedIn() 
+        && isValidId(topicId)
+        && isValidTopicReviewMeta(request.resource.data);
+      allow delete: if false;
+    }
+  }
+}
