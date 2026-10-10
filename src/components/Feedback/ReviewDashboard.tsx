@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Star, 
-  MessageSquareCheck, 
+  ClipboardCheck as MessageSquareCheck, 
   AlertTriangle, 
   CheckCircle2, 
   Clock, 
