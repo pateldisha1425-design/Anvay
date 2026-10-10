@@ -21,7 +21,7 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Plus,
-  MessageSquareCheck
+  ClipboardCheck as MessageSquareCheck
 } from 'lucide-react';
 
 interface NoteWorkspaceProps {

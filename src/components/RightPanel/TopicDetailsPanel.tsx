@@ -23,7 +23,7 @@ import {
   Lightbulb,
   Star,
   MessageSquarePlus,
-  MessageSquareCheck,
+  ClipboardCheck as MessageSquareCheck,
   UserCheck,
   Calendar
 } from 'lucide-react';

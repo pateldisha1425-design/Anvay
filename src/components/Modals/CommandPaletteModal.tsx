@@ -11,7 +11,7 @@ import {
   CornerDownLeft,
   ShieldAlert,
   GraduationCap,
-  MessageSquareCheck
+  ClipboardCheck as MessageSquareCheck
 } from 'lucide-react';
 
 interface CommandItem {

@@ -10,7 +10,7 @@ import {
   FileText,
   ShieldAlert,
   GraduationCap,
-  MessageSquareCheck
+  ClipboardCheck as MessageSquareCheck
 } from 'lucide-react';
 
 export type RibbonPanelType = 'files' | 'search' | 'backlinks' | 'gaps' | 'progress';

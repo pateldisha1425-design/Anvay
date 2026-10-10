@@ -26,7 +26,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Star,
-  MessageSquareCheck,
+  ClipboardCheck as MessageSquareCheck,
   MessageSquarePlus,
   UserCheck,
   Calendar
