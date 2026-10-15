@@ -4,7 +4,8 @@ import {
   RelationshipEdge, 
   LearningStatus, 
   TabItem, 
-  GraphFilterOptions 
+  GraphFilterOptions,
+  FolderItem
 } from '../../types/knowledge';
 import { QuizResult } from '../../types/learning';
 import { FeedbackReport, TopicReviewMeta, ReportStatus } from '../../types/feedback';
@@ -12,6 +13,7 @@ import { GraphView } from '../Graph/GraphView';
 import { NoteViewer } from './NoteViewer';
 import { NoteEditor } from './NoteEditor';
 import { ReviewDashboard } from '../Feedback/ReviewDashboard';
+import { FormulaReferenceDashboard } from '../Exam/FormulaReferenceDashboard';
 import { 
   X, 
   Network, 
@@ -21,7 +23,8 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Plus,
-  ClipboardCheck as MessageSquareCheck
+  ClipboardCheck as MessageSquareCheck,
+  Calculator
 } from 'lucide-react';
 
 interface NoteWorkspaceProps {
@@ -35,6 +38,7 @@ interface NoteWorkspaceProps {
   topics: TopicNode[];
   edges: RelationshipEdge[];
   statuses: Record<string, LearningStatus>;
+  folders?: FolderItem[];
   onUpdateStatus: (topicId: string, status: LearningStatus) => void;
   onSaveNoteContent: (topicId: string, newContent: string) => void;
   onResetNoteToDefault?: (topicId: string) => void;
@@ -53,6 +57,9 @@ interface NoteWorkspaceProps {
   onNavigateForward: () => void;
   tabModes: Record<string, 'read' | 'edit'>;
   onToggleTabMode: (tabId: string) => void;
+  studyDates?: Record<string, string>;
+  onRecordStudyDate?: (topicId: string, dateIso?: string) => void;
+  onSelectFolder?: (folderId: string) => void;
   // Topic ratings, review metadata & feedback reports
   topicReviews?: Record<string, TopicReviewMeta>;
   userRatings?: Record<string, number>;
@@ -75,6 +82,7 @@ export const NoteWorkspace: React.FC<NoteWorkspaceProps> = ({
   topics,
   edges,
   statuses,
+  folders = [],
   onUpdateStatus,
   onSaveNoteContent,
   onResetNoteToDefault,
@@ -93,6 +101,9 @@ export const NoteWorkspace: React.FC<NoteWorkspaceProps> = ({
   onNavigateForward,
   tabModes,
   onToggleTabMode,
+  studyDates = {},
+  onRecordStudyDate,
+  onSelectFolder,
   topicReviews = {},
   userRatings = {},
   reports = [],
@@ -105,6 +116,7 @@ export const NoteWorkspace: React.FC<NoteWorkspaceProps> = ({
   const activeTopic = topics.find(t => t.id === activeTabId);
   const isGraphTab = activeTabId === 'graph-view';
   const isReviewDashboardTab = activeTabId === 'review-dashboard';
+  const isGateReferenceTab = activeTabId === 'gate-reference';
   const currentMode = tabModes[activeTabId] || 'read';
 
   return (
@@ -167,6 +179,8 @@ export const NoteWorkspace: React.FC<NoteWorkspaceProps> = ({
               >
                 {tab.type === 'review' || tab.id === 'review-dashboard' ? (
                   <MessageSquareCheck className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-400' : 'text-zinc-500'}`} />
+                ) : tab.type === 'gate' || tab.id === 'gate-reference' ? (
+                  <Calculator className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-purple-400' : 'text-zinc-500'}`} />
                 ) : (
                   <FileText className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-zinc-300' : 'text-zinc-600'}`} />
                 )}
@@ -261,6 +275,16 @@ export const NoteWorkspace: React.FC<NoteWorkspaceProps> = ({
               }}
             />
           </div>
+        ) : isGateReferenceTab ? (
+          <div className="w-full h-full overflow-y-auto bg-[#161618]">
+            <FormulaReferenceDashboard
+              allTopics={topics}
+              onOpenTopicNote={(topicId) => {
+                onSelectTopic(topicId);
+                onOpenNoteTab(topicId);
+              }}
+            />
+          </div>
         ) : activeTopic ? (
           <div className="w-full h-full overflow-y-auto bg-[#161618]">
             {currentMode === 'read' ? (
@@ -293,6 +317,8 @@ export const NoteWorkspace: React.FC<NoteWorkspaceProps> = ({
               <NoteEditor
                 topic={activeTopic}
                 allTopics={topics}
+                folders={folders}
+                onSelectFolder={onSelectFolder}
                 onSaveContent={onSaveNoteContent}
                 onResetToDefault={onResetNoteToDefault}
               />

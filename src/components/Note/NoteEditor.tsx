@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { TopicNode } from '../../types/knowledge';
+import { TopicNode, FolderItem } from '../../types/knowledge';
+import { NoteBreadcrumbBar } from './NoteBreadcrumbBar';
 import { 
   Bold, 
   Heading, 
@@ -16,6 +17,8 @@ interface NoteEditorProps {
   allTopics: TopicNode[];
   onSaveContent: (topicId: string, newContent: string) => void;
   onResetToDefault?: (topicId: string) => void;
+  folders?: FolderItem[];
+  onSelectFolder?: (folderId: string) => void;
 }
 
 export const NoteEditor: React.FC<NoteEditorProps> = ({
@@ -23,6 +26,8 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   allTopics,
   onSaveContent,
   onResetToDefault,
+  folders,
+  onSelectFolder,
 }) => {
   const [content, setContent] = useState(topic.content);
   const [savedNotification, setSavedNotification] = useState(false);
@@ -79,7 +84,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
           </button>
           <button
             onClick={() => insertText('[[', ']]')}
-            className="px-1.5 py-0.5 text-blue-400 hover:text-blue-300 hover:bg-[#202024] rounded text-[11px] font-mono transition-colors"
+            className="px-1.5 py-0.5 text-zinc-300 hover:text-white hover:bg-[#202024] rounded text-[11px] font-mono transition-colors"
             title="Insert internal Wiki-Link [[Topic]]"
           >
             [[link]]
@@ -135,14 +140,20 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         </div>
       </div>
 
-      {/* Editor Textarea */}
+      {/* Editor Textarea with Breadcrumb */}
       <div className="flex-1 p-6 sm:p-10 overflow-y-auto">
+        <NoteBreadcrumbBar
+          topic={topic}
+          folders={folders}
+          onSelectFolder={onSelectFolder}
+          className="mb-4 pb-2 border-b border-[#232326]"
+        />
         <textarea
           id="note-editor-textarea"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Write note in Markdown. Use [[Topic Title]] to link concepts..."
-          className="w-full h-full min-h-[500px] bg-transparent text-zinc-200 font-mono text-[13px] leading-relaxed resize-none focus:outline-none selection:bg-blue-600/30"
+          className="w-full h-full min-h-[500px] bg-transparent text-zinc-200 font-mono text-[13px] leading-relaxed resize-none focus:outline-none selection:bg-zinc-700/50"
           spellCheck={false}
         />
       </div>

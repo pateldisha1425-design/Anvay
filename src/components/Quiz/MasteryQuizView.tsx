@@ -120,7 +120,7 @@ export const MasteryQuizView: React.FC<MasteryQuizViewProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-blue-400">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
                 Rule-Based Diagnostic Mastery Test
               </span>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#25252b] text-zinc-400 border border-[#2f2f36]">
@@ -268,7 +268,7 @@ export const MasteryQuizView: React.FC<MasteryQuizViewProps> = ({
 
               {/* Math snippet if present */}
               {q.formulaSnippet && (
-                <div className="my-2 ml-7 p-2 rounded bg-[#1e1e24] border border-[#2a2a32] font-mono text-cyan-300 text-xs text-center">
+                <div className="my-2 ml-7 p-2 rounded bg-[#1e1e24] border border-[#2a2a32] font-mono text-zinc-200 text-xs text-center">
                   {q.formulaSnippet}
                 </div>
               )}
@@ -298,7 +298,7 @@ export const MasteryQuizView: React.FC<MasteryQuizViewProps> = ({
                       optionStyle = 'bg-[#18181b] border-[#242428] text-zinc-500 opacity-60';
                     }
                   } else if (isThisSelected) {
-                    optionStyle = 'bg-[#1c2230] border-blue-500 text-blue-200';
+                    optionStyle = 'bg-[#222228] border-zinc-500 text-white font-medium';
                   }
 
                   return (
@@ -310,7 +310,7 @@ export const MasteryQuizView: React.FC<MasteryQuizViewProps> = ({
                     >
                       <span className={`w-4 h-4 rounded-full border text-[10px] font-mono flex items-center justify-center shrink-0 mt-0.5 ${
                         isThisSelected 
-                          ? 'border-blue-400 bg-blue-500 text-white' 
+                          ? 'border-zinc-300 bg-white text-zinc-950 font-bold' 
                           : 'border-zinc-600 text-zinc-400'
                       }`}>
                         {String.fromCharCode(65 + optIndex)}
@@ -335,7 +335,7 @@ export const MasteryQuizView: React.FC<MasteryQuizViewProps> = ({
                       <span>Foundational concept: <strong>{prereqTopic.title}</strong></span>
                       <button
                         onClick={() => onNavigateTopic(prereqTopic.id)}
-                        className="text-blue-400 hover:underline flex items-center gap-1 font-normal"
+                        className="text-zinc-200 hover:text-white hover:underline flex items-center gap-1 font-normal"
                       >
                         <span>Study Note</span>
                         <ArrowRight className="w-3 h-3" />
@@ -360,7 +360,7 @@ export const MasteryQuizView: React.FC<MasteryQuizViewProps> = ({
             disabled={answeredCount < totalQuestions}
             className={`px-4 py-2 rounded text-xs font-medium transition-all ${
               answeredCount === totalQuestions
-                ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-800/30'
+                ? 'bg-zinc-200 hover:bg-white text-zinc-900 shadow-sm'
                 : 'bg-[#222226] text-zinc-500 cursor-not-allowed'
             }`}
           >

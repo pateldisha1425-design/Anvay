@@ -149,36 +149,37 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/75 backdrop-blur-xs animate-fadeIn">
       <div 
         className="w-full max-w-xl max-h-[90vh] bg-[#161619] border border-[#2b2b30] rounded-xl shadow-2xl flex flex-col overflow-hidden text-zinc-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#26262a] bg-[#1a1a1e]">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-[#26262a] bg-[#1a1a1e] shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-md bg-blue-950/60 border border-blue-800/40 text-blue-400">
+            <div className="p-1.5 rounded-md bg-[#222228] border border-zinc-700/60 text-zinc-200">
               <FileQuestion className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-zinc-100">
                 Submit Topic Feedback & Report Issue
               </h2>
-              <p className="text-[11px] text-zinc-400 truncate max-w-sm">
-                Topic: <strong className="text-blue-300 font-medium">{topic.title}</strong>
+              <p className="text-[11px] text-zinc-400 truncate max-w-[200px] sm:max-w-sm">
+                Topic: <strong className="text-white font-medium">{topic.title}</strong>
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-[#25252b] transition-colors"
+            className="min-h-[36px] min-w-[36px] flex items-center justify-center p-1 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-[#25252b] transition-colors touch-manipulation"
+            aria-label="Close feedback modal"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs">
           {validationError && (
             <div className="p-2.5 rounded-lg bg-red-950/50 border border-red-800/50 text-red-300 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" />
@@ -197,7 +198,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                 onClick={() => setReporterRole('student')}
                 className={`flex items-center justify-center gap-2 p-2 rounded-lg border text-xs transition-colors ${
                   reporterRole === 'student'
-                    ? 'bg-blue-950/40 border-blue-500 text-blue-300 font-medium'
+                    ? 'bg-[#222228] border-zinc-500 text-white font-medium'
                     : 'bg-[#1a1a1e] border-[#29292e] text-zinc-400 hover:text-zinc-200'
                 }`}
               >
@@ -209,7 +210,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                 onClick={() => setReporterRole('teacher')}
                 className={`flex items-center justify-center gap-2 p-2 rounded-lg border text-xs transition-colors ${
                   reporterRole === 'teacher'
-                    ? 'bg-purple-950/40 border-purple-500 text-purple-300 font-medium'
+                    ? 'bg-[#222228] border-zinc-500 text-white font-medium'
                     : 'bg-[#1a1a1e] border-[#29292e] text-zinc-400 hover:text-zinc-200'
                 }`}
               >
@@ -240,11 +241,11 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                     }}
                     className={`flex items-start gap-2 p-2.5 rounded-lg border text-left transition-colors ${
                       isSelected
-                        ? 'bg-[#22222a] border-blue-500/80 text-zinc-100 shadow-xs'
+                        ? 'bg-[#22222a] border-zinc-500 text-white shadow-xs'
                         : 'bg-[#19191c] border-[#252529] text-zinc-400 hover:text-zinc-200 hover:bg-[#1d1d22]'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${isSelected ? 'text-blue-400' : 'text-zinc-500'}`} />
+                    <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${isSelected ? 'text-white' : 'text-zinc-500'}`} />
                     <div>
                       <div className="font-medium text-[12px]">{cat.label}</div>
                       <div className="text-[10px] text-zinc-500 line-clamp-1">{cat.description}</div>
@@ -264,7 +265,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               <select
                 value={severity}
                 onChange={(e) => setSeverity(e.target.value as FeedbackSeverity)}
-                className="w-full bg-[#19191d] border border-[#2b2b30] rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-blue-500"
+                className="w-full bg-[#19191d] border border-[#2b2b30] rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-400"
               >
                 <option value="low">Low (Cosmetic / Minor enhancement)</option>
                 <option value="medium">Medium (Improves comprehension)</option>
@@ -309,7 +310,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               onChange={(e) => setComment(e.target.value)}
               placeholder="Describe what is unclear, missing, or incorrect. If reporting a formula error, mention the equation or line..."
               rows={4}
-              className="w-full bg-[#19191d] border border-[#2b2b30] rounded-lg p-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-blue-500 leading-relaxed font-sans"
+              className="w-full bg-[#19191d] border border-[#2b2b30] rounded-lg p-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-400 leading-relaxed font-sans"
             />
           </div>
 
@@ -317,7 +318,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           <div className="border border-[#26262a] rounded-lg bg-[#19191c] p-3 space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Network className="w-4 h-4 text-blue-400" />
+                <Network className="w-4 h-4 text-zinc-300" />
                 <span className="font-medium text-zinc-300">
                   Suggest Knowledge Graph Connection
                 </span>
@@ -327,7 +328,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                 id="toggleGraphSuggestion"
                 checked={includeGraphSuggestion || category === 'graph_connection'}
                 onChange={(e) => setIncludeGraphSuggestion(e.target.checked)}
-                className="rounded accent-blue-500 cursor-pointer"
+                className="rounded accent-zinc-400 cursor-pointer"
               />
             </div>
 
@@ -343,7 +344,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                     <select
                       value={targetTopicId}
                       onChange={(e) => setTargetTopicId(e.target.value)}
-                      className="w-full bg-[#141416] border border-[#27272b] rounded px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-blue-500"
+                      className="w-full bg-[#141416] border border-[#27272b] rounded px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-400"
                     >
                       {allTopics
                         .filter(t => t.id !== topic.id)
@@ -360,7 +361,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                     <select
                       value={suggestedRelationType}
                       onChange={(e) => setSuggestedRelationType(e.target.value as any)}
-                      className="w-full bg-[#141416] border border-[#27272b] rounded px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-blue-500"
+                      className="w-full bg-[#141416] border border-[#27272b] rounded px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-400"
                     >
                       <option value="prerequisite">Is Prerequisite Of</option>
                       <option value="related">Is Related To</option>
@@ -377,7 +378,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                     value={graphSuggestionNotes}
                     onChange={(e) => setGraphSuggestionNotes(e.target.value)}
                     placeholder="Why should this edge be added or changed? (e.g., needed before deriving hysteresis loop)"
-                    className="w-full bg-[#141416] border border-[#27272b] rounded px-2.5 py-1.5 text-[11px] text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-[#141416] border border-[#27272b] rounded px-2.5 py-1.5 text-[11px] text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-400"
                   />
                 </div>
               </div>
@@ -394,7 +395,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               value={reporterName}
               onChange={(e) => setReporterName(e.target.value)}
               placeholder="e.g. Arjun K. (MSE) or Anonymous"
-              className="w-full bg-[#19191d] border border-[#2b2b30] rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-blue-500"
+              className="w-full bg-[#19191d] border border-[#2b2b30] rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-400"
             />
           </div>
         </form>
@@ -416,7 +417,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-sm disabled:opacity-50"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-zinc-200 hover:bg-white text-zinc-950 transition-colors shadow-sm disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Submit Report</span>

@@ -53,6 +53,7 @@ export interface TopicReviewMeta {
   reviewNotes?: string;
   averageRating: number;
   totalRatings: number;
+  unresolvedIssues?: number;
   updatedAt: string;
 }
 

@@ -100,10 +100,10 @@ export const TopicRatingWidget: React.FC<TopicRatingWidgetProps> = ({
       {onOpenFeedback && (
         <button
           onClick={onOpenFeedback}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-[#222228] hover:bg-[#2a2a32] text-zinc-300 hover:text-zinc-100 border border-[#2f2f37] transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-[#222228] hover:bg-[#2a2a32] text-zinc-300 hover:text-white border border-[#2f2f37] transition-colors"
           title="Report errors, unclear explanations, missing prerequisites or poor resources"
         >
-          <MessageSquarePlus className="w-3.5 h-3.5 text-blue-400" />
+          <MessageSquarePlus className="w-3.5 h-3.5 text-zinc-300" />
           <span>Report Issue / Feedback</span>
         </button>
       )}

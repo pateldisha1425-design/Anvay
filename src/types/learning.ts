@@ -100,3 +100,49 @@ export interface SyllabusOverallProgress {
   totalGapsDetected: number;
   moduleBreakdown: SyllabusModuleProgress[];
 }
+
+export type ContentDepthLevel = 'foundational' | 'undergraduate' | 'gate_honors' | 'unified';
+
+export interface TopicExamNumerical {
+  id: string;
+  problemStatement: string;
+  givenValues: Record<string, string>;
+  formulaUsed: string;
+  stepByStepSolution: string[];
+  answerWithUnits: string;
+  gateYearOrExam?: string;
+  difficulty?: 'Advanced Academic' | 'University Exam' | 'Viva Voce';
+}
+
+export interface TopicKeyFormula {
+  name: string;
+  formula: string;
+  parameterDefinitions: string;
+  units: string;
+  validityConditions?: string;
+}
+
+export interface TopicDepthData {
+  topicId: string;
+  foundational: {
+    coreAnalogy: string;
+    intuitiveExplanation: string;
+    keyTakeaways: string[];
+    quickCheckQuestion?: string;
+    quickCheckAnswer?: string;
+  };
+  undergraduate: {
+    formalNotes: string;
+    reactionMechanismsOrStructures?: string;
+    applications: string[];
+    keyInsights: string[];
+  };
+  gateHonors: {
+    derivationTitle: string;
+    rigorousDerivation: string;
+    keyFormulas: TopicKeyFormula[];
+    examTraps: string[];
+    solvedNumericals: TopicExamNumerical[];
+    vivaQuestions?: { question: string; modelAnswer: string }[];
+  };
+}

@@ -11,7 +11,8 @@ import {
   CornerDownLeft,
   ShieldAlert,
   GraduationCap,
-  ClipboardCheck as MessageSquareCheck
+  ClipboardCheck as MessageSquareCheck,
+  Calculator
 } from 'lucide-react';
 
 interface CommandItem {
@@ -28,7 +29,8 @@ interface CommandPaletteModalProps {
   onClose: () => void;
   onOpenGraph: () => void;
   onOpenReviewDashboard?: () => void;
-  onOpenQuickSwitcher: () => void;
+  onOpenGateDashboard?: () => void;
+  onOpenQuickSwitcher?: () => void;
   onCreateNewNote: () => void;
   onToggleReadEditMode: () => void;
   onToggleLeftSidebar: () => void;
@@ -44,6 +46,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onClose,
   onOpenGraph,
   onOpenReviewDashboard,
+  onOpenGateDashboard,
   onOpenQuickSwitcher,
   onCreateNewNote,
   onToggleReadEditMode,
@@ -66,6 +69,13 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       icon: <Network className="w-3.5 h-3.5 text-blue-400" />,
       action: onOpenGraph,
     },
+    ...(onOpenGateDashboard ? [{
+      id: 'open-gate-dashboard',
+      title: 'Academic: Open Formula & Numerical Reference Hub',
+      category: 'Reference',
+      icon: <Calculator className="w-3.5 h-3.5 text-purple-400" />,
+      action: onOpenGateDashboard,
+    }] : []),
     ...(onOpenReviewDashboard ? [{
       id: 'open-review-dashboard',
       title: 'Review: Open Academic Review & Feedback Dashboard',
@@ -94,14 +104,14 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       icon: <GraduationCap className="w-3.5 h-3.5 text-emerald-400" />,
       action: onOpenProgressPanel,
     }] : []),
-    {
+    ...(onOpenQuickSwitcher ? [{
       id: 'quick-switcher',
       title: 'Quick switcher: Open note...',
       category: 'Navigation',
       icon: <Search className="w-3.5 h-3.5 text-zinc-400" />,
       action: onOpenQuickSwitcher,
       shortcut: 'Ctrl+O',
-    },
+    }] : []),
     {
       id: 'create-note',
       title: 'Note: Create new personal note',

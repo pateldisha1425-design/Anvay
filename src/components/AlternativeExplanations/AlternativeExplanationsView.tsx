@@ -33,25 +33,25 @@ export const AlternativeExplanationsView: React.FC<AlternativeExplanationsViewPr
     {
       mode: 'intuitive',
       label: 'Intuitive Analogy',
-      icon: <Lightbulb className="w-4 h-4 text-amber-400" />,
+      icon: <Lightbulb className="w-4 h-4 text-zinc-300" />,
       desc: 'Real-world mental models & metaphors'
     },
     {
       mode: 'rigorous',
       label: 'First-Principles & Equations',
-      icon: <Binary className="w-4 h-4 text-cyan-400" />,
+      icon: <Binary className="w-4 h-4 text-zinc-300" />,
       desc: 'Thermodynamics & mathematical derivations'
     },
     {
       mode: 'mechanism',
       label: 'Physical Mechanism',
-      icon: <Cog className="w-4 h-4 text-indigo-400" />,
+      icon: <Cog className="w-4 h-4 text-zinc-300" />,
       desc: 'Step-by-step physical & chemical cascade'
     },
     {
       mode: 'exam_viva',
       label: 'Exam & Viva Cheat Sheet',
-      icon: <GraduationCap className="w-4 h-4 text-emerald-400" />,
+      icon: <GraduationCap className="w-4 h-4 text-zinc-300" />,
       desc: 'High-yield exam traps & model viva answers'
     }
   ];
@@ -66,7 +66,7 @@ export const AlternativeExplanationsView: React.FC<AlternativeExplanationsViewPr
       if (line.startsWith('### ')) {
         elements.push(
           <h4 key={`h3-${index}`} className="text-sm font-semibold text-zinc-100 mt-4 mb-2 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" />
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 inline-block" />
             {line.replace('### ', '')}
           </h4>
         );
@@ -86,7 +86,7 @@ export const AlternativeExplanationsView: React.FC<AlternativeExplanationsViewPr
       // Blockquote >
       if (line.startsWith('> ')) {
         elements.push(
-          <blockquote key={`bq-${index}`} className="my-2.5 p-3 rounded bg-[#1f1d2b] border-l-2 border-indigo-500 text-xs text-indigo-200 leading-relaxed italic">
+          <blockquote key={`bq-${index}`} className="my-2.5 p-3 rounded bg-[#18181c] border-l-2 border-zinc-500 text-xs text-zinc-300 leading-relaxed italic">
             {line.replace('> ', '')}
           </blockquote>
         );
@@ -149,7 +149,7 @@ export const AlternativeExplanationsView: React.FC<AlternativeExplanationsViewPr
     return mathParts.map((part, pIdx) => {
       if (part.startsWith('$') && part.endsWith('$') && part.length > 2) {
         return (
-          <span key={`im-${pIdx}`} className="font-mono text-cyan-300 bg-[#1e2029] px-1 py-0.5 rounded text-[11px]">
+          <span key={`im-${pIdx}`} className="font-mono text-zinc-200 bg-[#202026] px-1 py-0.5 rounded text-[11px] border border-zinc-700/40">
             {cleanMath(part.slice(1, -1))}
           </span>
         );
@@ -204,13 +204,13 @@ export const AlternativeExplanationsView: React.FC<AlternativeExplanationsViewPr
               onClick={() => setActiveMode(mode)}
               className={`p-3 rounded-lg border text-left transition-all ${
                 isActive
-                  ? 'bg-[#202028] border-blue-500/70 shadow-sm shadow-blue-900/20'
+                  ? 'bg-[#222226] border-zinc-600 shadow-sm'
                   : 'bg-[#18181b] border-[#25252a] hover:border-[#383842] hover:bg-[#1c1c20]'
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
                 {icon}
-                <span className={`text-xs font-semibold ${isActive ? 'text-blue-300' : 'text-zinc-300'}`}>
+                <span className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-zinc-300'}`}>
                   {label}
                 </span>
               </div>
@@ -227,7 +227,7 @@ export const AlternativeExplanationsView: React.FC<AlternativeExplanationsViewPr
         {/* Title and Cognitive Anchor Badge */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#26262a] gap-2">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-blue-400 block mb-0.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block mb-0.5">
               {currentExplanation.modeLabel}
             </span>
             <h3 className="text-sm font-semibold text-zinc-100">
@@ -239,8 +239,8 @@ export const AlternativeExplanationsView: React.FC<AlternativeExplanationsViewPr
           </div>
 
           <div className="self-start sm:self-auto flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#202026] border border-[#2d2d34] text-[11px] text-zinc-300">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="font-medium text-amber-200/90 truncate max-w-xs">
+            <Sparkles className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
+            <span className="font-medium text-zinc-200 truncate max-w-xs">
               {currentExplanation.cognitiveAnchor}
             </span>
           </div>
@@ -252,13 +252,13 @@ export const AlternativeExplanationsView: React.FC<AlternativeExplanationsViewPr
         </div>
 
         {/* Key Takeaway Callout */}
-        <div className="mt-4 p-3 rounded bg-[#1c2229] border border-[#203648] flex items-start gap-2.5">
-          <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+        <div className="mt-4 p-3 rounded bg-[#18181c] border border-zinc-700/60 flex items-start gap-2.5">
+          <CheckCircle2 className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
           <div>
-            <span className="text-[11px] font-semibold text-cyan-300 uppercase tracking-wider block mb-0.5">
+            <span className="text-[11px] font-semibold text-zinc-200 uppercase tracking-wider block mb-0.5">
               Core Cognitive Takeaway
             </span>
-            <p className="text-xs text-cyan-100 leading-relaxed">
+            <p className="text-xs text-zinc-300 leading-relaxed">
               {currentExplanation.keyInsight}
             </p>
           </div>

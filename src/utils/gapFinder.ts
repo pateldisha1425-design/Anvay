@@ -227,8 +227,11 @@ export function calculateSyllabusProgress(
     }
   });
 
-  // Module breakdown
-  const moduleBreakdown: SyllabusModuleProgress[] = folders.map(folder => {
+  // Module breakdown: include leaf/chapter folders so parent container does not render as an empty module
+  const parentFolderIds = new Set(folders.map(f => f.parentId).filter(Boolean));
+  const displayFolders = folders.filter(f => !parentFolderIds.has(f.id));
+
+  const moduleBreakdown: SyllabusModuleProgress[] = displayFolders.map(folder => {
     const folderTopics = topics.filter(t => t.folderId === folder.id);
     const count = folderTopics.length;
     if (count === 0) {

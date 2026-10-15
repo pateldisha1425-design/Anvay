@@ -79,7 +79,7 @@ export const ProgressTrackingPanel: React.FC<ProgressTrackingPanelProps> = ({
           </span>
 
           <div className="flex items-baseline justify-center gap-1">
-            <span className="text-3xl font-extrabold text-blue-400">
+            <span className="text-3xl font-extrabold text-white">
               {progress.overallMasteryPercentage}%
             </span>
             <span className="text-xs text-zinc-500">completed</span>
@@ -88,7 +88,7 @@ export const ProgressTrackingPanel: React.FC<ProgressTrackingPanelProps> = ({
           {/* Progress Bar */}
           <div className="w-full bg-[#24242a] h-2 rounded-full overflow-hidden">
             <div
-              className="bg-gradient-to-r from-blue-500 to-emerald-400 h-full rounded-full transition-all duration-500"
+              className="bg-zinc-300 h-full rounded-full transition-all duration-500"
               style={{ width: `${progress.overallMasteryPercentage}%` }}
             />
           </div>
@@ -103,7 +103,7 @@ export const ProgressTrackingPanel: React.FC<ProgressTrackingPanelProps> = ({
         <div className="grid grid-cols-2 gap-2">
           <div className="p-2.5 rounded bg-[#1a1a1d] border border-[#242428] space-y-1">
             <div className="flex items-center gap-1.5 text-zinc-400 text-[10px]">
-              <Eye className="w-3 h-3 text-blue-400" />
+              <Eye className="w-3 h-3 text-zinc-400" />
               <span>Total Visits</span>
             </div>
             <div className="text-sm font-bold text-zinc-100 font-mono">
@@ -186,14 +186,14 @@ export const ProgressTrackingPanel: React.FC<ProgressTrackingPanelProps> = ({
                   <span className="font-medium text-zinc-200 truncate pr-2">
                     {mod.folderName}
                   </span>
-                  <span className="text-[11px] font-mono text-blue-400 font-semibold shrink-0">
+                  <span className="text-[11px] font-mono text-zinc-200 font-semibold shrink-0">
                     {mod.percentage}%
                   </span>
                 </div>
 
                 <div className="w-full bg-[#25252c] h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-blue-500 h-full rounded-full transition-all duration-300"
+                    className="bg-zinc-300 h-full rounded-full transition-all duration-300"
                     style={{ width: `${mod.percentage}%` }}
                   />
                 </div>
@@ -209,8 +209,8 @@ export const ProgressTrackingPanel: React.FC<ProgressTrackingPanelProps> = ({
 
         {/* Continue Learning Action */}
         {nextStudyTopic && (
-          <div className="p-3 rounded-lg bg-[#182029] border border-[#223548] space-y-1.5">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-blue-400 block">
+          <div className="p-3 rounded-lg bg-[#18181b] border border-[#27272a] space-y-1.5">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">
               Recommended Next Step
             </span>
             <h5 className="text-xs font-semibold text-zinc-200">
@@ -224,7 +224,7 @@ export const ProgressTrackingPanel: React.FC<ProgressTrackingPanelProps> = ({
                 onSelectTopic(nextStudyTopic.id);
                 onOpenNote(nextStudyTopic.id);
               }}
-              className="mt-1 w-full py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+              className="mt-1 w-full py-1.5 rounded bg-zinc-200 hover:bg-white text-zinc-900 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
             >
               <span>Continue Studying</span>
               <ArrowRight className="w-3.5 h-3.5" />

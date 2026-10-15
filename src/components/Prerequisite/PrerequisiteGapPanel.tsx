@@ -88,7 +88,7 @@ export const PrerequisiteGapPanel: React.FC<PrerequisiteGapPanelProps> = ({
 
           <button
             onClick={onHighlightGapsInGraph}
-            className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#202026] hover:bg-[#282830] text-blue-400 hover:text-blue-300 border border-[#2c2c34] text-[10px] transition-colors"
+            className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#202026] hover:bg-[#282830] text-zinc-300 hover:text-white border border-[#2c2c34] text-[10px] transition-colors"
             title="Highlight all missing prerequisite nodes in interactive graph"
           >
             <Network className="w-3 h-3" />
@@ -203,7 +203,7 @@ export const PrerequisiteGapPanel: React.FC<PrerequisiteGapPanelProps> = ({
                             onSelectTopic(gap.missingPrerequisiteId);
                             onOpenNote(gap.missingPrerequisiteId);
                           }}
-                          className="text-[11px] text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1"
+                          className="text-[11px] text-zinc-300 hover:text-white hover:underline flex items-center gap-1"
                         >
                           <span>Open Note</span>
                           <ArrowRight className="w-3 h-3" />
@@ -217,7 +217,7 @@ export const PrerequisiteGapPanel: React.FC<PrerequisiteGapPanelProps> = ({
               {/* Recommended Study Sequence */}
               {selectedDiagnostic.recommendedLearningPath.length > 1 && (
                 <div className="p-3 rounded bg-[#19191d] border border-[#25252b] space-y-2">
-                  <span className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider block">
+                  <span className="text-[10px] font-semibold text-zinc-300 uppercase tracking-wider block">
                     Recommended Learning Pathway
                   </span>
                   <div className="space-y-1.5">
@@ -235,7 +235,7 @@ export const PrerequisiteGapPanel: React.FC<PrerequisiteGapPanelProps> = ({
                           }}
                           className={`p-1.5 rounded text-xs flex items-center justify-between cursor-pointer transition-colors ${
                             isTarget
-                              ? 'bg-[#202028] text-blue-300 font-medium border border-blue-500/40'
+                              ? 'bg-[#222228] text-white font-medium border border-zinc-700/60'
                               : 'hover:bg-[#202024] text-zinc-300'
                           }`}
                         >
@@ -290,7 +290,7 @@ export const PrerequisiteGapPanel: React.FC<PrerequisiteGapPanelProps> = ({
                   onClick={() => setAuditFilter(mode)}
                   className={`px-2 py-0.5 rounded transition-colors capitalize ${
                     auditFilter === mode
-                      ? 'bg-blue-600/30 text-blue-300 border border-blue-500/50'
+                      ? 'bg-[#25252b] text-white font-medium border border-zinc-700/60'
                       : 'bg-[#202024] text-zinc-400 hover:text-zinc-200'
                   }`}
                 >

@@ -33,3 +33,27 @@
     background: #3a3a40;
   }
 }
+
+@keyframes noteModeEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-note-mode-switch {
+  animation: noteModeEnter 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-note-mode-switch {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

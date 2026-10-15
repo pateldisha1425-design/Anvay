@@ -42,7 +42,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ topic }) => {
       case 'textbook':
         return <BookOpen className="w-4 h-4 text-emerald-400" />;
       case 'paper':
-        return <FileText className="w-4 h-4 text-blue-400" />;
+        return <FileText className="w-4 h-4 text-zinc-300" />;
       case 'lecture':
         return <Video className="w-4 h-4 text-purple-400" />;
       case 'formula':
@@ -57,7 +57,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ topic }) => {
       case 'introductory':
         return 'text-emerald-400 bg-emerald-950/40 border-emerald-800/50';
       case 'intermediate':
-        return 'text-blue-400 bg-blue-950/40 border-blue-800/50';
+        return 'text-zinc-200 bg-zinc-800/80 border-zinc-700/60';
       case 'advanced':
         return 'text-purple-400 bg-purple-950/40 border-purple-800/50';
       default:
@@ -71,7 +71,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ topic }) => {
       <div className="bg-[#1a1a1e] border border-[#27272c] rounded-lg p-4">
         <div className="flex items-start justify-between">
           <div>
-            <span className="text-[11px] font-semibold text-blue-400 uppercase tracking-wider block mb-1">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1">
               Curated Academic Literature & Standards
             </span>
             <h3 className="text-sm font-semibold text-zinc-100">
@@ -95,7 +95,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ topic }) => {
               onClick={() => setFilterType(type)}
               className={`px-2.5 py-0.5 rounded text-[11px] transition-colors capitalize ${
                 filterType === type
-                  ? 'bg-blue-600/30 text-blue-300 border border-blue-500/50'
+                  ? 'bg-[#242428] text-white font-medium border border-zinc-600'
                   : 'bg-[#202024] text-zinc-400 hover:text-zinc-200 border border-transparent'
               }`}
             >
@@ -182,7 +182,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ topic }) => {
                 ))}
               </div>
               {res.citationOrLink && (
-                <span className="text-blue-400 font-mono text-[10px]">
+                <span className="text-zinc-400 font-mono text-[10px]">
                   {res.citationOrLink}
                 </span>
               )}

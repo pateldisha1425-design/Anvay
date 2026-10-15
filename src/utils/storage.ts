@@ -1,13 +1,16 @@
-import { LearningStatus, TopicNode, RelationshipEdge } from '../types/knowledge';
-import { QuizResult } from '../types/learning';
+import { LearningStatus, TopicNode, RelationshipEdge, FolderItem } from '../types/knowledge';
+import { QuizResult, ContentDepthLevel } from '../types/learning';
 import { FeedbackReport, TopicReviewMeta, ReportStatus } from '../types/feedback';
 import { INITIAL_FEEDBACK_REPORTS, INITIAL_TOPIC_REVIEWS, getInitialReviewMetaForTopic } from '../data/feedbackData';
+import { ImmersionSettings, SavedVocabularyItem, ImmersionQuizAttempt } from '../types/immersion';
+import { INITIAL_FOLDERS } from '../data/syllabusData';
 
 const STORAGE_KEYS = {
   STATUSES: 'blue_learning_statuses_v1',
   EDITED_CONTENT: 'blue_edited_notes_v1',
   CUSTOM_TOPICS: 'blue_custom_topics_v1',
   CUSTOM_EDGES: 'blue_custom_edges_v1',
+  CUSTOM_FOLDERS: 'anvay_custom_folders_v1',
   OPEN_TABS: 'blue_open_tabs_v1',
   ACTIVE_TAB: 'blue_active_tab_v1',
   VISITS: 'anvay_topic_visits_v1',
@@ -15,7 +18,33 @@ const STORAGE_KEYS = {
   USER_RATINGS: 'anvay_user_ratings_v1',
   FEEDBACK_REPORTS: 'anvay_feedback_reports_v1',
   TOPIC_REVIEWS: 'anvay_topic_reviews_v1',
+  DEPTH_LEVEL: 'anvay_depth_level_v1',
+  STUDY_DATES: 'anvay_last_study_dates_v1',
+  REVIEW_INTERVALS: 'anvay_review_intervals_v1',
+  IMMERSION_SETTINGS: 'anvay_immersion_settings_v1',
+  SAVED_VOCABULARY: 'anvay_saved_vocabulary_v1',
+  IMMERSION_QUIZZES: 'anvay_immersion_quizzes_v1',
 };
+
+export function getStoredDepthLevel(): ContentDepthLevel {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.DEPTH_LEVEL);
+    if (raw === 'foundational' || raw === 'undergraduate' || raw === 'gate_honors' || raw === 'unified') {
+      return raw;
+    }
+    return 'undergraduate';
+  } catch (err) {
+    return 'undergraduate';
+  }
+}
+
+export function saveStoredDepthLevel(level: ContentDepthLevel): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.DEPTH_LEVEL, level);
+  } catch (err) {
+    console.warn('Failed to save depth level in localStorage', err);
+  }
+}
 
 export function getStoredTopicVisits(): Record<string, number> {
   try {
@@ -119,6 +148,55 @@ export function deleteStoredTopic(topicId: string): void {
     localStorage.setItem(STORAGE_KEYS.STATUSES, JSON.stringify(statuses));
   } catch (err) {
     console.warn('Failed to delete custom topic', err);
+  }
+}
+
+export function getStoredFolders(): FolderItem[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.CUSTOM_FOLDERS);
+    if (!raw) {
+      return INITIAL_FOLDERS;
+    }
+    const customList: FolderItem[] = JSON.parse(raw);
+    const map = new Map<string, FolderItem>();
+    INITIAL_FOLDERS.forEach(f => map.set(f.id, f));
+    customList.forEach(f => map.set(f.id, f));
+    return Array.from(map.values());
+  } catch (err) {
+    console.warn('Failed to load folders from localStorage', err);
+    return INITIAL_FOLDERS;
+  }
+}
+
+export function saveStoredFolder(folder: FolderItem): FolderItem[] {
+  try {
+    const current = getStoredFolders();
+    const idx = current.findIndex(f => f.id === folder.id);
+    let updated: FolderItem[];
+    if (idx >= 0) {
+      updated = [...current];
+      updated[idx] = folder;
+    } else {
+      updated = [...current, folder];
+    }
+    localStorage.setItem(STORAGE_KEYS.CUSTOM_FOLDERS, JSON.stringify(updated));
+    return updated;
+  } catch (err) {
+    console.warn('Failed to save folder to localStorage', err);
+    return INITIAL_FOLDERS;
+  }
+}
+
+export function deleteStoredFolder(folderId: string): FolderItem[] {
+  try {
+    // Only custom folders can be deleted, not default ones
+    const current = getStoredFolders();
+    const updated = current.filter(f => f.id !== folderId);
+    localStorage.setItem(STORAGE_KEYS.CUSTOM_FOLDERS, JSON.stringify(updated));
+    return updated;
+  } catch (err) {
+    console.warn('Failed to delete folder from localStorage', err);
+    return INITIAL_FOLDERS;
   }
 }
 
@@ -300,12 +378,183 @@ export function updateStoredTopicReview(
   }
 }
 
+// ----------------------------------------------------
+// Spaced Repetition Study Dates & Intervals
+// ----------------------------------------------------
+export function getStoredStudyDates(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.STUDY_DATES);
+    return raw ? JSON.parse(raw) : {};
+  } catch (err) {
+    console.warn('Failed to load study dates from localStorage', err);
+    return {};
+  }
+}
+
+export function saveStoredStudyDate(topicId: string, dateIso: string = new Date().toISOString()): Record<string, string> {
+  try {
+    const current = getStoredStudyDates();
+    current[topicId] = dateIso;
+    localStorage.setItem(STORAGE_KEYS.STUDY_DATES, JSON.stringify(current));
+    return current;
+  } catch (err) {
+    console.warn('Failed to save study date to localStorage', err);
+    return {};
+  }
+}
+
+export function saveAllStoredStudyDates(dates: Record<string, string>): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.STUDY_DATES, JSON.stringify(dates));
+  } catch (err) {
+    console.warn('Failed to save all study dates to localStorage', err);
+  }
+}
+
+export function getStoredReviewIntervals(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.REVIEW_INTERVALS);
+    return raw ? JSON.parse(raw) : {};
+  } catch (err) {
+    console.warn('Failed to load review intervals from localStorage', err);
+    return {};
+  }
+}
+
+export function saveStoredReviewInterval(topicId: string, intervalDays: number): Record<string, number> {
+  try {
+    const current = getStoredReviewIntervals();
+    current[topicId] = intervalDays;
+    localStorage.setItem(STORAGE_KEYS.REVIEW_INTERVALS, JSON.stringify(current));
+    return current;
+  } catch (err) {
+    console.warn('Failed to save review interval to localStorage', err);
+    return {};
+  }
+}
+
+export const DEFAULT_IMMERSION_SETTINGS: ImmersionSettings = {
+  isEnabled: false, // OFF by default
+  level: 'beginner',
+  highlightStyle: 'subtle_saffron',
+  showDevanagari: true,
+};
+
+export function getStoredImmersionSettings(): ImmersionSettings {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.IMMERSION_SETTINGS);
+    if (!raw) return DEFAULT_IMMERSION_SETTINGS;
+    const parsed = JSON.parse(raw);
+    return {
+      isEnabled: typeof parsed.isEnabled === 'boolean' ? parsed.isEnabled : false,
+      level: ['beginner', 'intermediate', 'advanced'].includes(parsed.level) ? parsed.level : 'beginner',
+      highlightStyle: 'subtle_saffron',
+      showDevanagari: parsed.showDevanagari ?? true,
+    };
+  } catch (err) {
+    return DEFAULT_IMMERSION_SETTINGS;
+  }
+}
+
+export function saveStoredImmersionSettings(settings: ImmersionSettings): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.IMMERSION_SETTINGS, JSON.stringify(settings));
+  } catch (err) {
+    console.warn('Failed to save immersion settings to localStorage', err);
+  }
+}
+
+export function getStoredSavedVocabulary(): Record<string, SavedVocabularyItem> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.SAVED_VOCABULARY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (err) {
+    console.warn('Failed to load saved vocabulary from localStorage', err);
+    return {};
+  }
+}
+
+export function saveStoredVocabularyWord(
+  wordId: string, 
+  item?: Partial<SavedVocabularyItem>
+): Record<string, SavedVocabularyItem> {
+  try {
+    const current = getStoredSavedVocabulary();
+    const existing = current[wordId];
+    current[wordId] = {
+      wordId,
+      savedAt: existing?.savedAt || new Date().toISOString(),
+      mastered: existing?.mastered || false,
+      timesReviewed: (existing?.timesReviewed || 0) + (item?.timesReviewed || 0),
+      lastReviewedAt: item?.lastReviewedAt || existing?.lastReviewedAt,
+      notes: item?.notes ?? existing?.notes,
+      ...item,
+    };
+    localStorage.setItem(STORAGE_KEYS.SAVED_VOCABULARY, JSON.stringify(current));
+    return current;
+  } catch (err) {
+    console.warn('Failed to save vocabulary word to localStorage', err);
+    return {};
+  }
+}
+
+export function removeStoredVocabularyWord(wordId: string): Record<string, SavedVocabularyItem> {
+  try {
+    const current = getStoredSavedVocabulary();
+    delete current[wordId];
+    localStorage.setItem(STORAGE_KEYS.SAVED_VOCABULARY, JSON.stringify(current));
+    return current;
+  } catch (err) {
+    console.warn('Failed to remove vocabulary word from localStorage', err);
+    return {};
+  }
+}
+
+export function toggleStoredVocabularyMastered(wordId: string): Record<string, SavedVocabularyItem> {
+  try {
+    const current = getStoredSavedVocabulary();
+    if (current[wordId]) {
+      current[wordId].mastered = !current[wordId].mastered;
+      current[wordId].lastReviewedAt = new Date().toISOString();
+      current[wordId].timesReviewed = (current[wordId].timesReviewed || 0) + 1;
+      localStorage.setItem(STORAGE_KEYS.SAVED_VOCABULARY, JSON.stringify(current));
+    }
+    return current;
+  } catch (err) {
+    console.warn('Failed to toggle vocabulary mastered state', err);
+    return {};
+  }
+}
+
+export function getStoredImmersionQuizAttempts(): ImmersionQuizAttempt[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.IMMERSION_QUIZZES);
+    return raw ? JSON.parse(raw) : [];
+  } catch (err) {
+    console.warn('Failed to load immersion quiz history', err);
+    return [];
+  }
+}
+
+export function saveStoredImmersionQuizAttempt(attempt: ImmersionQuizAttempt): ImmersionQuizAttempt[] {
+  try {
+    const current = getStoredImmersionQuizAttempts();
+    const updated = [attempt, ...current].slice(0, 50); // Keep last 50
+    localStorage.setItem(STORAGE_KEYS.IMMERSION_QUIZZES, JSON.stringify(updated));
+    return updated;
+  } catch (err) {
+    console.warn('Failed to save immersion quiz attempt', err);
+    return [];
+  }
+}
+
 export function resetAllData(): void {
   try {
     localStorage.removeItem(STORAGE_KEYS.STATUSES);
     localStorage.removeItem(STORAGE_KEYS.EDITED_CONTENT);
     localStorage.removeItem(STORAGE_KEYS.CUSTOM_TOPICS);
     localStorage.removeItem(STORAGE_KEYS.CUSTOM_EDGES);
+    localStorage.removeItem(STORAGE_KEYS.CUSTOM_FOLDERS);
     localStorage.removeItem(STORAGE_KEYS.OPEN_TABS);
     localStorage.removeItem(STORAGE_KEYS.ACTIVE_TAB);
     localStorage.removeItem(STORAGE_KEYS.VISITS);
@@ -313,6 +562,11 @@ export function resetAllData(): void {
     localStorage.removeItem(STORAGE_KEYS.USER_RATINGS);
     localStorage.removeItem(STORAGE_KEYS.FEEDBACK_REPORTS);
     localStorage.removeItem(STORAGE_KEYS.TOPIC_REVIEWS);
+    localStorage.removeItem(STORAGE_KEYS.STUDY_DATES);
+    localStorage.removeItem(STORAGE_KEYS.REVIEW_INTERVALS);
+    localStorage.removeItem(STORAGE_KEYS.IMMERSION_SETTINGS);
+    localStorage.removeItem(STORAGE_KEYS.SAVED_VOCABULARY);
+    localStorage.removeItem(STORAGE_KEYS.IMMERSION_QUIZZES);
   } catch (err) {
     console.warn('Failed to reset localStorage', err);
   }

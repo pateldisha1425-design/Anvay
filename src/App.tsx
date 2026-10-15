@@ -26,10 +26,13 @@ import {
   updateStoredReportStatus,
   getStoredTopicReviews,
   updateStoredTopicReview,
+  getStoredStudyDates,
+  saveStoredStudyDate,
   resetAllData 
 } from './utils/storage';
 import { QuizResult } from './types/learning';
 import { FeedbackReport, TopicReviewMeta, ReportStatus, TopicRating } from './types/feedback';
+import { getInitialReviewMetaForTopic } from './data/feedbackData';
 import { FeedbackModal } from './components/Feedback/FeedbackModal';
 import { diagnoseAllSyllabusTopics } from './utils/gapFinder';
 import { Ribbon, RibbonPanelType } from './components/Sidebar/Ribbon';
@@ -40,9 +43,14 @@ import { PrerequisiteGapPanel } from './components/Prerequisite/PrerequisiteGapP
 import { ProgressTrackingPanel } from './components/Progress/ProgressTrackingPanel';
 import { NoteWorkspace } from './components/Note/NoteWorkspace';
 import { TopicDetailsPanel } from './components/RightPanel/TopicDetailsPanel';
+import { MobileDrawerContainer } from './components/Sidebar/MobileDrawerContainer';
+import { ImmersionSidebarPanel } from './components/Immersion/ImmersionSidebarPanel';
+import { VocabularyPracticeModal } from './components/Immersion/VocabularyPracticeModal';
+import { getStoredImmersionSettings, saveStoredImmersionSettings } from './utils/immersionEngine';
+import { ImmersionSettings } from './types/immersion';
+import { useIsMobile } from './hooks/useIsMobile';
 import { StatusBar } from './components/StatusBar/StatusBar';
 import { NewNoteModal } from './components/Modals/NewNoteModal';
-import { QuickSwitcherModal } from './components/Modals/QuickSwitcherModal';
 import { CommandPaletteModal } from './components/Modals/CommandPaletteModal';
 import { 
   PanelLeft, 
@@ -54,7 +62,8 @@ import {
   CloudCheck,
   User as UserIcon,
   LogIn,
-  LogOut
+  LogOut,
+  GraduationCap
 } from 'lucide-react';
 import { auth, loginWithGoogle, logoutUser, User, onAuthStateChanged } from './lib/firebase';
 import { 
@@ -69,6 +78,8 @@ import {
 } from './lib/syncService';
 
 export default function App() {
+  const isMobile = useIsMobile(768);
+
   // Authentication & Cloud Sync
   const [user, setUser] = useState<User | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -84,7 +95,164 @@ export default function App() {
   const [userRatings, setUserRatings] = useState<Record<string, number>>(() => getStoredUserRatings());
   const [feedbackReports, setFeedbackReports] = useState<FeedbackReport[]>(() => getStoredFeedbackReports());
   const [topicReviews, setTopicReviews] = useState<Record<string, TopicReviewMeta>>(() => getStoredTopicReviews());
+  const [studyDates, setStudyDates] = useState<Record<string, string>>(() => getStoredStudyDates());
   const [feedbackModalTopicId, setFeedbackModalTopicId] = useState<string | null>(null);
+
+  // Marathi Immersion settings & practice modal state
+  const [immersionSettings, setImmersionSettings] = useState<ImmersionSettings>(() => getStoredImmersionSettings());
+  const [isPracticeModalOpen, setIsPracticeModalOpen] = useState(false);
+  const [practiceWordId, setPracticeWordId] = useState<string | undefined>(undefined);
+
+  const handleUpdateImmersionSettings = useCallback((updates: Partial<ImmersionSettings>) => {
+    setImmersionSettings(prev => {
+      const updated = { ...prev, ...updates };
+      saveStoredImmersionSettings(updated);
+      return updated;
+    });
+  }, []);
+
+  // Spaced Repetition study date recording callback
+  const handleRecordStudyDate = useCallback((topicId: string, dateIso: string = new Date().toISOString()) => {
+    setStudyDates(prev => {
+      const updated = saveStoredStudyDate(topicId, dateIso);
+      return { ...prev, ...updated };
+    });
+  }, []);
+
+  // Topic Rating handler (1-5 stars, recalculates review average, persists locally and syncs to shared Firestore)
+  const handleRateTopic = useCallback((topicId: string, rating: number) => {
+    setUserRatings(prev => {
+      const updated = saveStoredUserRating(topicId, rating);
+      return { ...prev, ...updated };
+    });
+
+    setTopicReviews(prev => {
+      const currentMeta = prev[topicId] || getInitialReviewMetaForTopic(topicId);
+      const prevUserRating = userRatings[topicId];
+      const newTotal = prevUserRating ? currentMeta.totalRatings : currentMeta.totalRatings + 1;
+      const currentSum = currentMeta.averageRating * currentMeta.totalRatings;
+      const newSum = prevUserRating
+        ? currentSum - prevUserRating + rating
+        : currentSum + rating;
+      const newAvg = Number((newSum / (newTotal || 1)).toFixed(1));
+
+      const updatedMeta: TopicReviewMeta = {
+        ...currentMeta,
+        averageRating: newAvg,
+        totalRatings: newTotal,
+        lastReviewedAt: currentMeta.lastReviewedAt || new Date().toISOString()
+      };
+      updateStoredTopicReview(topicId, updatedMeta);
+
+      if (user) {
+        syncRatingToCloud({
+          id: `${topicId}_${user.uid}`,
+          topicId,
+          userId: user.uid,
+          userName: user.displayName || 'Learner',
+          rating,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }).catch(err => console.error('Cloud rating sync failed', err));
+
+        syncTopicReviewMetaToCloud(updatedMeta).catch(err =>
+          console.error('Cloud topic review meta sync failed', err)
+        );
+      }
+
+      return { ...prev, [topicId]: updatedMeta };
+    });
+  }, [user, userRatings]);
+
+  // Submit Feedback Report handler
+  const handleSubmitFeedbackReport = useCallback(async (report: FeedbackReport) => {
+    setFeedbackReports(prev => {
+      const updated = saveStoredFeedbackReport(report);
+      return updated;
+    });
+
+    setTopicReviews(prev => {
+      const currentMeta = prev[report.topicId] || getInitialReviewMetaForTopic(report.topicId);
+      const updatedMeta: TopicReviewMeta = {
+        ...currentMeta,
+        unresolvedIssues: (currentMeta.unresolvedIssues || 0) + 1,
+        updatedAt: new Date().toISOString()
+      };
+      updateStoredTopicReview(report.topicId, updatedMeta);
+      return { ...prev, [report.topicId]: updatedMeta };
+    });
+
+    if (user) {
+      try {
+        await syncFeedbackReportToCloud(report);
+      } catch (err) {
+        console.error('Failed to sync feedback report to cloud', err);
+      }
+    }
+  }, [user]);
+
+  // Update Feedback Report status handler
+  const handleUpdateReportStatus = useCallback(async (
+    reportId: string, 
+    newStatus: ReportStatus, 
+    reviewerNotes?: string, 
+    reviewerName?: string
+  ) => {
+    const updatedReports = updateStoredReportStatus(reportId, newStatus, reviewerNotes, reviewerName);
+    setFeedbackReports(updatedReports);
+
+    const report = updatedReports.find(r => r.id === reportId);
+    if (report) {
+      const topicUnresolved = updatedReports.filter(
+        r => r.topicId === report.topicId && (r.status === 'pending' || r.status === 'under_review')
+      ).length;
+
+      setTopicReviews(prev => {
+        const currentMeta = prev[report.topicId] || getInitialReviewMetaForTopic(report.topicId);
+        const updatedMeta: TopicReviewMeta = {
+          ...currentMeta,
+          unresolvedIssues: topicUnresolved,
+          lastReviewedAt: new Date().toISOString(),
+          reviewedBy: reviewerName || currentMeta.reviewedBy || 'Academic Committee',
+          updatedAt: new Date().toISOString()
+        };
+        updateStoredTopicReview(report.topicId, updatedMeta);
+
+        if (user) {
+          syncTopicReviewMetaToCloud(updatedMeta).catch(err =>
+            console.error('Failed to sync review meta on status update', err)
+          );
+        }
+
+        return { ...prev, [report.topicId]: updatedMeta };
+      });
+    }
+
+    if (user) {
+      try {
+        await updateReportStatusInCloud(reportId, newStatus, reviewerNotes, reviewerName);
+      } catch (err) {
+        console.error('Failed to update report status in cloud', err);
+      }
+    }
+  }, [user]);
+
+  // Update Topic Review metadata handler
+  const handleUpdateTopicReview = useCallback(async (
+    topicId: string, 
+    updates: Partial<TopicReviewMeta>
+  ) => {
+    const updatedMap = updateStoredTopicReview(topicId, updates);
+    setTopicReviews(updatedMap);
+
+    if (user && updatedMap[topicId]) {
+      try {
+        await syncTopicReviewMetaToCloud(updatedMap[topicId]);
+      } catch (err) {
+        console.error('Failed to sync topic review meta to cloud', err);
+      }
+    }
+  }, [user]);
 
   // Listen to Auth State
   useEffect(() => {
@@ -96,6 +264,8 @@ export default function App() {
 
   // Real-time subscription to shared Feedback Reports and Topic Reviews (Firestore)
   useEffect(() => {
+    if (!user) return;
+
     const unsubShared = subscribeToSharedFeedback(
       (cloudReports) => {
         setFeedbackReports(prev => {
@@ -113,7 +283,7 @@ export default function App() {
       }
     );
     return () => unsubShared();
-  }, []);
+  }, [user]);
 
   // Multi-tab storage synchronization
   useEffect(() => {
@@ -124,6 +294,8 @@ export default function App() {
         setFeedbackReports(getStoredFeedbackReports());
       } else if (e.key === 'anvay_topic_reviews_v1') {
         setTopicReviews(getStoredTopicReviews());
+      } else if (e.key === 'anvay_last_study_dates_v1') {
+        setStudyDates(getStoredStudyDates());
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -183,7 +355,8 @@ export default function App() {
       }
       return { ...prev, ...updated };
     });
-  }, [user, statuses]);
+    handleRecordStudyDate(topicId);
+  }, [user, statuses, handleRecordStudyDate]);
 
   // Merge base topics with custom notes and edits
   const allTopics = useMemo(() => {
@@ -206,8 +379,21 @@ export default function App() {
 
   const [allEdges] = useState<RelationshipEdge[]>(INITIAL_EDGES);
 
+  // Folders State
+  const [folders, setFolders] = useState<FolderItem[]>(INITIAL_FOLDERS);
+
+  const handleCreateFolder = useCallback((name: string, parentId?: string) => {
+    const newFolder: FolderItem = {
+      id: `folder-${Date.now()}`,
+      name,
+      parentId,
+      order: folders.length + 1,
+    };
+    setFolders(prev => [...prev, newFolder]);
+  }, [folders.length]);
+
   // Layout Panels
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [activeRibbonPanel, setActiveRibbonPanel] = useState<RibbonPanelType>('files');
 
@@ -238,8 +424,15 @@ export default function App() {
 
   // Modals
   const [isNewNoteModalOpen, setIsNewNoteModalOpen] = useState(false);
-  const [isQuickSwitcherOpen, setIsQuickSwitcherOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [targetFolderId, setTargetFolderId] = useState<string | null>(null);
+
+  // Navigate to folder in FileExplorer (from breadcrumbs)
+  const handleNavigateToFolder = useCallback((folderId: string) => {
+    setActiveRibbonPanel('files');
+    setLeftSidebarOpen(true);
+    setTargetFolderId(folderId);
+  }, []);
 
   // Graph Filters
   const [graphFilters, setGraphFilters] = useState<GraphFilterOptions>({
@@ -248,6 +441,10 @@ export default function App() {
     selectedRelationType: 'all',
     searchQuery: '',
     highlightMode: 'all',
+    hideOrphans: false,
+    graphMode: 'global',
+    localDepth: 1,
+    colorGroupBy: 'none',
   });
 
   // Push tab to history
@@ -303,7 +500,10 @@ export default function App() {
     setSelectedTopicId(topicId);
     trackVisit(topicId);
     pushToHistory(topicId);
-  }, [allTopics, pushToHistory, trackVisit]);
+    if (isMobile) {
+      setLeftSidebarOpen(false);
+    }
+  }, [allTopics, pushToHistory, trackVisit, isMobile]);
 
   // Select tab
   const handleSelectTab = useCallback((tabId: string) => {
@@ -355,6 +555,28 @@ export default function App() {
     }));
   }, [pushToHistory]);
 
+  // Open Academic & Formula Reference Hub tab
+  const handleOpenGateTab = useCallback(() => {
+    setOpenTabs(prev => {
+      const existing = prev.find(t => t.id === 'gate-reference');
+      if (existing) return prev;
+      return [...prev, { id: 'gate-reference', title: 'Academic & Formula Reference', type: 'gate' }];
+    });
+    setActiveTabId('gate-reference');
+    pushToHistory('gate-reference');
+  }, [pushToHistory]);
+
+  // Open Academic Review Dashboard tab
+  const handleOpenReviewDashboard = useCallback(() => {
+    setOpenTabs(prev => {
+      const existing = prev.find(t => t.id === 'review-dashboard');
+      if (existing) return prev;
+      return [...prev, { id: 'review-dashboard', title: 'Curriculum Review', type: 'review' }];
+    });
+    setActiveTabId('review-dashboard');
+    pushToHistory('review-dashboard');
+  }, [pushToHistory]);
+
   // Ribbon Panel selection
   const handleRibbonPanelSelect = (panel: RibbonPanelType) => {
     if (activeRibbonPanel === panel && leftSidebarOpen) {
@@ -373,13 +595,10 @@ export default function App() {
     }));
   };
 
-  // Keyboard shortcuts (Cmd+K / Ctrl+O for switcher, Cmd+P / Ctrl+P for command palette)
+  // Keyboard shortcuts (Cmd+P / Ctrl+P for command palette)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
-        e.preventDefault();
-        setIsQuickSwitcherOpen(prev => !prev);
-      } else if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
         e.preventDefault();
         setIsCommandPaletteOpen(prev => !prev);
       }
@@ -454,6 +673,7 @@ export default function App() {
       setCustomTopics([]);
       setTopicVisits({});
       setQuizResults({});
+      setStudyDates({});
       setOpenTabs([{ id: 'oxides-definition', title: 'Definition of Oxides', type: 'note' }]);
       setActiveTabId('graph-view');
       setSelectedTopicId('oxides-definition');
@@ -466,56 +686,47 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen w-screen bg-[#161618] text-[#dcddde] overflow-hidden select-none">
       {/* Top Window Title Bar (Obsidian Desktop Window Frame) */}
-      <header className="h-8 bg-[#121214] border-b border-[#232326] flex items-center justify-between px-2.5 shrink-0 z-30 text-[11px] text-zinc-400">
+      <header className="h-8 bg-[#121214] border-b border-[#232326] flex items-center justify-between px-2 sm:px-2.5 shrink-0 z-30 text-[11px] text-zinc-400">
         {/* Left window branding */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5 sm:space-x-2">
           <button
             onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
-            className="p-1 hover:text-zinc-200 hover:bg-[#202024] rounded transition-colors"
-            title={leftSidebarOpen ? 'Collapse left sidebar' : 'Expand left sidebar'}
+            className={`p-1.5 min-h-[28px] min-w-[28px] flex items-center justify-center rounded transition-colors touch-manipulation ${
+              leftSidebarOpen ? 'text-zinc-100 bg-[#232328]' : 'text-zinc-400 hover:text-zinc-200 hover:bg-[#202024]'
+            }`}
+            title={leftSidebarOpen ? 'Collapse left sidebar (Swipe left to close on mobile)' : 'Expand left sidebar'}
+            aria-label="Toggle navigation sidebar"
           >
             <PanelLeft className="w-3.5 h-3.5" />
           </button>
           <span className="font-medium text-zinc-200 tracking-tight">
             Anvay
           </span>
-          <span className="text-zinc-600">•</span>
+          <span className="text-zinc-600 hidden min-[480px]:inline">•</span>
           <span className="text-zinc-500 hidden sm:inline">
             Functional Materials — Second Brain
           </span>
         </div>
 
-        {/* Center Quick Switcher trigger */}
-        <div className="flex items-center">
-          <button
-            onClick={() => setIsQuickSwitcherOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#18181b] hover:bg-[#202024] border border-[#27272b] text-[11px] text-zinc-400 hover:text-zinc-200 transition-colors"
-          >
-            <Search className="w-3 h-3 text-zinc-500" />
-            <span className="hidden md:inline">Quick Switcher</span>
-            <kbd className="text-[10px] text-zinc-500 font-mono">Ctrl+O</kbd>
-          </button>
-        </div>
-
         {/* Right utility buttons & Cloud Auth */}
-        <div className="flex items-center space-x-1.5">
+        <div className="flex items-center space-x-1 sm:space-x-1.5">
           {/* Firebase Auth Google Sign-in */}
           <div className="relative">
             {user ? (
               <div className="flex items-center">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#18181b] hover:bg-[#202024] border border-[#27272b] text-xs text-zinc-300 transition-colors"
+                  className="flex items-center gap-1.5 px-1.5 sm:px-2 py-0.5 min-h-[28px] rounded bg-[#18181b] hover:bg-[#202024] border border-[#27272b] text-xs text-zinc-300 transition-colors touch-manipulation"
                   title="Firebase Auth & Cloud Sync"
                 >
                   {user.photoURL ? (
                     <img src={user.photoURL} alt="" className="w-3.5 h-3.5 rounded-full" />
                   ) : (
-                    <div className="w-3.5 h-3.5 rounded-full bg-blue-600 flex items-center justify-center text-[9px] text-white font-medium">
+                    <div className="w-3.5 h-3.5 rounded-full bg-zinc-700 flex items-center justify-center text-[9px] text-white font-medium">
                       {user.displayName?.[0] || 'U'}
                     </div>
                   )}
-                  <span className="max-w-[70px] sm:max-w-[110px] truncate text-[11px]">
+                  <span className="max-w-[45px] min-[360px]:max-w-[75px] sm:max-w-[110px] truncate text-[11px]">
                     {user.displayName || user.email?.split('@')[0]}
                   </span>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="Firestore synced" />
@@ -553,11 +764,11 @@ export default function App() {
                 onClick={async () => {
                   await loginWithGoogle();
                 }}
-                className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#18181b] hover:bg-[#202024] border border-[#27272b] text-xs text-zinc-300 hover:text-white transition-colors"
+                className="flex items-center gap-1.5 px-1.5 sm:px-2 py-0.5 min-h-[28px] rounded bg-[#18181b] hover:bg-[#202024] border border-[#27272b] text-xs text-zinc-300 hover:text-white transition-colors touch-manipulation"
                 title="Sign in with Google to sync notes and visit counts across devices"
               >
-                <LogIn className="w-3 h-3 text-blue-400" />
-                <span className="text-[11px]">Sign In</span>
+                <LogIn className="w-3 h-3 text-zinc-300 shrink-0" />
+                <span className="text-[11px] hidden min-[360px]:inline">Sign In</span>
               </button>
             )}
           </div>
@@ -566,15 +777,19 @@ export default function App() {
 
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="p-1 hover:text-zinc-200 hover:bg-[#202024] rounded transition-colors"
+            className="p-1 min-h-[28px] min-w-[28px] flex items-center justify-center hover:text-zinc-200 hover:bg-[#202024] rounded transition-colors touch-manipulation"
             title="Command Palette (Ctrl+P)"
+            aria-label="Command Palette"
           >
             <Terminal className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
-            className="p-1 hover:text-zinc-200 hover:bg-[#202024] rounded transition-colors"
-            title={rightSidebarOpen ? 'Collapse inspector' : 'Expand inspector'}
+            className={`p-1.5 min-h-[28px] min-w-[28px] flex items-center justify-center rounded transition-colors touch-manipulation ${
+              rightSidebarOpen ? 'text-zinc-100 bg-[#232328]' : 'text-zinc-400 hover:text-zinc-200 hover:bg-[#202024]'
+            }`}
+            title={rightSidebarOpen ? 'Collapse inspector (Swipe right to close on mobile)' : 'Expand inspector'}
+            aria-label="Toggle topic details inspector"
           >
             <PanelRight className="w-3.5 h-3.5" />
           </button>
@@ -589,79 +804,108 @@ export default function App() {
           isLeftSidebarOpen={leftSidebarOpen}
           onSelectPanel={handleRibbonPanelSelect}
           onOpenGraph={handleOpenGraphTab}
+          onOpenReviewDashboard={handleOpenReviewDashboard}
+          onOpenGateDashboard={handleOpenGateTab}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-          onOpenQuickSwitcher={() => setIsQuickSwitcherOpen(true)}
           onCreateNewNote={() => setIsNewNoteModalOpen(true)}
           onOpenSettings={handleResetAllProgress}
         />
 
         {/* B. Left Navigation Panel (File Explorer / Search / Backlinks / Gaps / Progress) */}
-        {leftSidebarOpen && (
-          <aside className="w-60 sm:w-64 shrink-0 h-full overflow-hidden border-r border-[#232326] z-20 bg-[#18181a]">
-            {activeRibbonPanel === 'files' && (
-              <FileExplorer
-                folders={INITIAL_FOLDERS}
-                topics={allTopics}
-                statuses={statuses}
-                topicVisits={topicVisits}
-                selectedTopicId={selectedTopicId}
-                onSelectTopic={(id) => setSelectedTopicId(id)}
-                onOpenNote={handleOpenNoteTab}
-                onCreateNewNote={() => setIsNewNoteModalOpen(true)}
-              />
-            )}
-            {activeRibbonPanel === 'search' && (
-              <SearchPanel
-                topics={allTopics}
-                statuses={statuses}
-                topicVisits={topicVisits}
-                onSelectTopic={(id) => setSelectedTopicId(id)}
-                onOpenNote={handleOpenNoteTab}
-                onFocusInGraph={handleFocusTopicInGraph}
-              />
-            )}
-            {activeRibbonPanel === 'backlinks' && (
-              <BacklinksPanel
-                selectedTopic={selectedTopic}
-                allTopics={allTopics}
-                edges={allEdges}
-                statuses={statuses}
-                onSelectTopic={(id) => setSelectedTopicId(id)}
-                onOpenNote={handleOpenNoteTab}
-              />
-            )}
-            {activeRibbonPanel === 'gaps' && (
-              <PrerequisiteGapPanel
-                selectedTopic={selectedTopic}
-                allTopics={allTopics}
-                edges={allEdges}
-                statuses={statuses}
-                quizResults={quizResults}
-                onSelectTopic={(id) => {
-                  setSelectedTopicId(id);
-                  trackVisit(id);
-                }}
-                onOpenNote={handleOpenNoteTab}
-                onHighlightGapsInGraph={handleHighlightGapsInGraph}
-              />
-            )}
-            {activeRibbonPanel === 'progress' && (
-              <ProgressTrackingPanel
-                topics={allTopics}
-                folders={INITIAL_FOLDERS}
-                statuses={statuses}
-                topicVisits={topicVisits}
-                quizResults={quizResults}
-                totalGapsDetected={fullSyllabusAudit.allGaps.length}
-                onSelectTopic={(id) => {
-                  setSelectedTopicId(id);
-                  trackVisit(id);
-                }}
-                onOpenNote={handleOpenNoteTab}
-              />
-            )}
-          </aside>
-        )}
+        <MobileDrawerContainer
+          isOpen={leftSidebarOpen}
+          onClose={() => setLeftSidebarOpen(false)}
+          side="left"
+          isMobile={isMobile}
+          title={
+            activeRibbonPanel === 'files' ? 'Files' :
+            activeRibbonPanel === 'search' ? 'Search' :
+            activeRibbonPanel === 'backlinks' ? 'Backlinks' :
+            activeRibbonPanel === 'gaps' ? 'Prerequisite Gaps' :
+            activeRibbonPanel === 'progress' ? 'Progress' :
+            activeRibbonPanel === 'immersion' ? 'Marathi Immersion' : 'Navigation'
+          }
+          desktopWidthClass="w-60 sm:w-64"
+        >
+          {activeRibbonPanel === 'files' && (
+            <FileExplorer
+              folders={folders}
+              topics={allTopics}
+              statuses={statuses}
+              topicVisits={topicVisits}
+              selectedTopicId={selectedTopicId}
+              onSelectTopic={(id) => setSelectedTopicId(id)}
+              onOpenNote={handleOpenNoteTab}
+              onCreateNewNote={() => setIsNewNoteModalOpen(true)}
+              onCreateFolder={handleCreateFolder}
+              targetFolderId={targetFolderId}
+            />
+          )}
+          {activeRibbonPanel === 'search' && (
+            <SearchPanel
+              topics={allTopics}
+              statuses={statuses}
+              topicVisits={topicVisits}
+              onSelectTopic={(id) => setSelectedTopicId(id)}
+              onOpenNote={handleOpenNoteTab}
+              onFocusInGraph={handleFocusTopicInGraph}
+            />
+          )}
+          {activeRibbonPanel === 'backlinks' && (
+            <BacklinksPanel
+              selectedTopic={selectedTopic}
+              allTopics={allTopics}
+              edges={allEdges}
+              statuses={statuses}
+              onSelectTopic={(id) => setSelectedTopicId(id)}
+              onOpenNote={handleOpenNoteTab}
+            />
+          )}
+          {activeRibbonPanel === 'gaps' && (
+            <PrerequisiteGapPanel
+              selectedTopic={selectedTopic}
+              allTopics={allTopics}
+              edges={allEdges}
+              statuses={statuses}
+              quizResults={quizResults}
+              onSelectTopic={(id) => {
+                setSelectedTopicId(id);
+                trackVisit(id);
+              }}
+              onOpenNote={handleOpenNoteTab}
+              onHighlightGapsInGraph={handleHighlightGapsInGraph}
+            />
+          )}
+          {activeRibbonPanel === 'progress' && (
+            <ProgressTrackingPanel
+              topics={allTopics}
+              folders={folders}
+              statuses={statuses}
+              topicVisits={topicVisits}
+              quizResults={quizResults}
+              totalGapsDetected={fullSyllabusAudit.allGaps.length}
+              onSelectTopic={(id) => {
+                setSelectedTopicId(id);
+                trackVisit(id);
+              }}
+              onOpenNote={handleOpenNoteTab}
+            />
+          )}
+          {activeRibbonPanel === 'immersion' && (
+            <ImmersionSidebarPanel
+              settings={immersionSettings}
+              onUpdateSettings={handleUpdateImmersionSettings}
+              onOpenPracticeModal={() => {
+                setPracticeWordId(undefined);
+                setIsPracticeModalOpen(true);
+              }}
+              onSelectWord={(word) => {
+                setPracticeWordId(word.id);
+                setIsPracticeModalOpen(true);
+              }}
+            />
+          )}
+        </MobileDrawerContainer>
 
         {/* C & D. Central Workspace (Tab Bar & Canvas) */}
         <main className="flex-1 h-full min-w-0 overflow-hidden">
@@ -676,6 +920,7 @@ export default function App() {
             topics={allTopics}
             edges={allEdges}
             statuses={statuses}
+            folders={folders}
             onUpdateStatus={handleUpdateStatus}
             onSaveNoteContent={handleSaveNoteContent}
             onResetNoteToDefault={handleResetNoteToDefault}
@@ -697,30 +942,52 @@ export default function App() {
             onNavigateForward={handleNavigateForward}
             tabModes={tabModes}
             onToggleTabMode={handleToggleTabMode}
+            studyDates={studyDates}
+            onRecordStudyDate={handleRecordStudyDate}
+            topicReviews={topicReviews}
+            userRatings={userRatings}
+            reports={feedbackReports}
+            isCloudConnected={!!user}
+            onRateTopic={handleRateTopic}
+            onSubmitFeedbackReport={handleSubmitFeedbackReport}
+            onUpdateReportStatus={handleUpdateReportStatus}
+            onUpdateTopicReview={handleUpdateTopicReview}
+            onSelectFolder={handleNavigateToFolder}
           />
         </main>
 
         {/* E. Optional Right Sidebar (Topic Inspector & Links) */}
-        {rightSidebarOpen && (
-          <aside className="w-64 sm:w-72 shrink-0 h-full overflow-hidden border-l border-[#232326] z-20 bg-[#18181a]">
-            <TopicDetailsPanel
-              topic={selectedTopic}
-              allTopics={allTopics}
-              edges={allEdges}
-              statuses={statuses}
-              visitCount={selectedTopic ? (topicVisits[selectedTopic.id] || 0) : 0}
-              quizResults={quizResults}
-              onClose={() => setRightSidebarOpen(false)}
-              onSelectTopic={(id) => {
-                setSelectedTopicId(id);
-                trackVisit(id);
-              }}
-              onOpenNote={handleOpenNoteTab}
-              onFocusInGraph={handleFocusTopicInGraph}
-              onUpdateStatus={handleUpdateStatus}
-            />
-          </aside>
-        )}
+        <MobileDrawerContainer
+          isOpen={rightSidebarOpen}
+          onClose={() => setRightSidebarOpen(false)}
+          side="right"
+          isMobile={isMobile}
+          title={selectedTopic ? selectedTopic.title : 'Concept Details'}
+          desktopWidthClass="w-64 sm:w-72"
+        >
+          <TopicDetailsPanel
+            topic={selectedTopic}
+            allTopics={allTopics}
+            edges={allEdges}
+            statuses={statuses}
+            visitCount={selectedTopic ? (topicVisits[selectedTopic.id] || 0) : 0}
+            quizResults={quizResults}
+            reviewMeta={selectedTopic ? topicReviews[selectedTopic.id] : undefined}
+            userRating={selectedTopic ? userRatings[selectedTopic.id] : undefined}
+            reports={feedbackReports}
+            onClose={() => setRightSidebarOpen(false)}
+            onSelectTopic={(id) => {
+              setSelectedTopicId(id);
+              trackVisit(id);
+            }}
+            onOpenNote={handleOpenNoteTab}
+            onFocusInGraph={handleFocusTopicInGraph}
+            onUpdateStatus={handleUpdateStatus}
+            onRateTopic={handleRateTopic}
+            onOpenFeedbackModal={(topicId) => setFeedbackModalTopicId(topicId)}
+            onOpenReviewDashboard={handleOpenReviewDashboard}
+          />
+        </MobileDrawerContainer>
       </div>
 
       {/* F. Bottom Status Bar */}
@@ -740,26 +1007,17 @@ export default function App() {
       <NewNoteModal
         isOpen={isNewNoteModalOpen}
         onClose={() => setIsNewNoteModalOpen(false)}
-        folders={INITIAL_FOLDERS}
+        folders={folders}
         allTopics={allTopics}
         onCreateNote={handleCreateCustomNote}
-      />
-
-      <QuickSwitcherModal
-        isOpen={isQuickSwitcherOpen}
-        onClose={() => setIsQuickSwitcherOpen(false)}
-        topics={allTopics}
-        statuses={statuses}
-        topicVisits={topicVisits}
-        onSelectTopic={(id) => setSelectedTopicId(id)}
-        onOpenNote={handleOpenNoteTab}
       />
 
       <CommandPaletteModal
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
         onOpenGraph={handleOpenGraphTab}
-        onOpenQuickSwitcher={() => setIsQuickSwitcherOpen(true)}
+        onOpenReviewDashboard={handleOpenReviewDashboard}
+        onOpenGateDashboard={handleOpenGateTab}
         onCreateNewNote={() => setIsNewNoteModalOpen(true)}
         onToggleReadEditMode={() => handleToggleTabMode(activeTabId)}
         onToggleLeftSidebar={() => setLeftSidebarOpen(prev => !prev)}
@@ -774,6 +1032,32 @@ export default function App() {
         }}
         onHighlightGapsInGraph={handleHighlightGapsInGraph}
         onResetDemo={handleResetAllProgress}
+      />
+
+      {feedbackModalTopicId && (
+        <FeedbackModal
+          isOpen={!!feedbackModalTopicId}
+          topic={allTopics.find(t => t.id === feedbackModalTopicId) || allTopics[0]}
+          allTopics={allTopics}
+          userRating={feedbackModalTopicId ? userRatings[feedbackModalTopicId] : undefined}
+          currentUserId={user?.uid || undefined}
+          currentUserName={user?.displayName || user?.email || undefined}
+          onClose={() => setFeedbackModalTopicId(null)}
+          onSubmit={(report, optionalRating) => {
+            handleSubmitFeedbackReport(report);
+            if (optionalRating) {
+              handleRateTopic(report.topicId, optionalRating);
+            }
+            setFeedbackModalTopicId(null);
+          }}
+        />
+      )}
+
+      {/* Marathi Vocabulary Flashcard Practice Modal */}
+      <VocabularyPracticeModal
+        isOpen={isPracticeModalOpen}
+        onClose={() => setIsPracticeModalOpen(false)}
+        initialWordId={practiceWordId}
       />
     </div>
   );

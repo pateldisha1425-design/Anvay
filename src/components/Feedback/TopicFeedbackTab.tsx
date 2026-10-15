@@ -82,7 +82,7 @@ export const TopicFeedbackTab: React.FC<TopicFeedbackTabProps> = ({
         );
       case 'under_review':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-sky-950/80 text-sky-400 border border-sky-800/40">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-zinc-800 text-zinc-200 border border-zinc-700/60">
             <Clock className="w-3 h-3" /> Under Review
           </span>
         );
@@ -108,8 +108,8 @@ export const TopicFeedbackTab: React.FC<TopicFeedbackTabProps> = ({
       case 'unclear': return <HelpCircle className="w-3.5 h-3.5 text-amber-400" />;
       case 'missing_prereq': return <ShieldAlert className="w-3.5 h-3.5 text-orange-400" />;
       case 'missing_example': return <Sparkles className="w-3.5 h-3.5 text-purple-400" />;
-      case 'poor_resource': return <BookOpen className="w-3.5 h-3.5 text-blue-400" />;
-      case 'graph_connection': return <Network className="w-3.5 h-3.5 text-cyan-400" />;
+      case 'poor_resource': return <BookOpen className="w-3.5 h-3.5 text-zinc-300" />;
+      case 'graph_connection': return <Network className="w-3.5 h-3.5 text-zinc-300" />;
     }
   };
 
@@ -128,13 +128,13 @@ export const TopicFeedbackTab: React.FC<TopicFeedbackTabProps> = ({
       {/* Last-Reviewed Academic Status Banner */}
       <div className="p-3.5 rounded-lg bg-[#18181b] border border-[#242428] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div className="flex items-start gap-2.5">
-          <div className="p-1.5 rounded-md bg-emerald-950/60 border border-emerald-800/40 text-emerald-400 shrink-0 mt-0.5">
+          <div className="p-1.5 rounded-md bg-[#222228] border border-zinc-700/60 text-zinc-200 shrink-0 mt-0.5">
             <UserCheck className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-medium text-zinc-400">Curriculum Review Status:</span>
-              <span className="font-semibold text-emerald-300">
+              <span className="font-semibold text-zinc-100">
                 Verified on {formatDate(reviewMeta?.lastReviewedAt)}
               </span>
             </div>
@@ -152,7 +152,7 @@ export const TopicFeedbackTab: React.FC<TopicFeedbackTabProps> = ({
         <div className="flex items-center gap-2 self-start sm:self-center">
           <button
             onClick={onOpenReportModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-200 hover:bg-white text-zinc-950 transition-colors"
           >
             <MessageSquarePlus className="w-3.5 h-3.5" />
             <span>Submit Report</span>
@@ -199,7 +199,7 @@ export const TopicFeedbackTab: React.FC<TopicFeedbackTabProps> = ({
               onClick={onOpenReportModal}
               className="mt-3 inline-flex items-center gap-1 px-3 py-1 rounded bg-[#202026] hover:bg-[#282830] text-zinc-300 text-xs transition-colors"
             >
-              <MessageSquarePlus className="w-3.5 h-3.5 text-blue-400" />
+              <MessageSquarePlus className="w-3.5 h-3.5 text-zinc-300" />
               <span>Report First Issue</span>
             </button>
           </div>
@@ -241,18 +241,18 @@ export const TopicFeedbackTab: React.FC<TopicFeedbackTabProps> = ({
 
                   {/* Graph connection proposal if attached */}
                   {report.graphSuggestion && (
-                    <div className="p-2.5 rounded bg-[#13151c] border border-blue-900/40 text-[11px] text-blue-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="p-2.5 rounded bg-[#17171d] border border-zinc-700/60 text-[11px] text-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <Network className="w-4 h-4 text-blue-400 shrink-0" />
+                        <Network className="w-4 h-4 text-zinc-300 shrink-0" />
                         <div>
                           <span>Suggested Graph Link: </span>
-                          <strong className="text-zinc-200">
+                          <strong className="text-white">
                             {topic.title}
                           </strong>
-                          <span className="text-blue-400 font-mono mx-1">
+                          <span className="text-zinc-400 font-mono mx-1">
                             --[{report.graphSuggestion.suggestedRelationType}]--&gt;
                           </span>
-                          <strong className="text-zinc-200">
+                          <strong className="text-white">
                             {allTopics.find(t => t.id === report.graphSuggestion?.targetTopicId)?.title || report.graphSuggestion.targetTopicId}
                           </strong>
                         </div>
@@ -265,7 +265,7 @@ export const TopicFeedbackTab: React.FC<TopicFeedbackTabProps> = ({
                               onNavigateTopic(report.graphSuggestion.targetTopicId);
                             }
                           }}
-                          className="px-2 py-0.5 rounded bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-800/50 text-[10px] transition-colors"
+                          className="px-2 py-0.5 rounded bg-[#222228] hover:bg-[#2b2b32] text-zinc-200 hover:text-white border border-zinc-700/60 text-[10px] transition-colors"
                         >
                           View Target Topic
                         </button>
@@ -309,8 +309,8 @@ export const TopicFeedbackTab: React.FC<TopicFeedbackTabProps> = ({
                         onClick={() => onUpdateReportStatus(report.id, 'under_review')}
                         className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
                           report.status === 'under_review'
-                            ? 'bg-sky-950 text-sky-300 font-semibold'
-                            : 'text-zinc-500 hover:text-sky-400 hover:bg-[#202026]'
+                            ? 'bg-zinc-800 text-white font-semibold'
+                            : 'text-zinc-500 hover:text-white hover:bg-[#202026]'
                         }`}
                       >
                         Under Review
@@ -346,7 +346,7 @@ export const TopicFeedbackTab: React.FC<TopicFeedbackTabProps> = ({
                           setEditingReportId(report.id);
                           setReviewerNoteDraft(report.reviewerNotes || '');
                         }}
-                        className="text-zinc-500 hover:text-blue-400 transition-colors"
+                        className="text-zinc-500 hover:text-white transition-colors"
                       >
                         {report.reviewerNotes ? 'Edit Reviewer Note' : '+ Add Note'}
                       </button>
@@ -364,7 +364,7 @@ export const TopicFeedbackTab: React.FC<TopicFeedbackTabProps> = ({
                         value={reviewerNoteDraft}
                         onChange={(e) => setReviewerNoteDraft(e.target.value)}
                         placeholder="e.g. Corrected tolerance factor equation on line 14..."
-                        className="w-full bg-[#19191d] border border-[#2b2b30] rounded px-2.5 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-blue-500"
+                        className="w-full bg-[#19191d] border border-[#2b2b30] rounded px-2.5 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-400"
                       />
                       <div className="flex items-center justify-end gap-2">
                         <button

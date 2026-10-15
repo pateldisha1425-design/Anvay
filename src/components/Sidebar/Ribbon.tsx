@@ -10,10 +10,12 @@ import {
   FileText,
   ShieldAlert,
   GraduationCap,
-  ClipboardCheck as MessageSquareCheck
+  ClipboardCheck as MessageSquareCheck,
+  Languages,
+  Calculator
 } from 'lucide-react';
 
-export type RibbonPanelType = 'files' | 'search' | 'backlinks' | 'gaps' | 'progress';
+export type RibbonPanelType = 'files' | 'search' | 'backlinks' | 'gaps' | 'progress' | 'immersion';
 
 interface RibbonProps {
   activePanel: RibbonPanelType;
@@ -21,8 +23,9 @@ interface RibbonProps {
   onSelectPanel: (panel: RibbonPanelType) => void;
   onOpenGraph: () => void;
   onOpenReviewDashboard?: () => void;
+  onOpenGateDashboard?: () => void;
   onOpenCommandPalette: () => void;
-  onOpenQuickSwitcher: () => void;
+  onOpenQuickSwitcher?: () => void;
   onCreateNewNote: () => void;
   onOpenSettings: () => void;
 }
@@ -33,6 +36,7 @@ export const Ribbon: React.FC<RibbonProps> = ({
   onSelectPanel,
   onOpenGraph,
   onOpenReviewDashboard,
+  onOpenGateDashboard,
   onOpenCommandPalette,
   onOpenQuickSwitcher,
   onCreateNewNote,
@@ -132,6 +136,33 @@ export const Ribbon: React.FC<RibbonProps> = ({
             <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-emerald-500 rounded-r" />
           )}
         </button>
+
+        {/* Marathi Language Immersion */}
+        <button
+          onClick={() => onSelectPanel('immersion')}
+          className={`relative p-2 rounded-md transition-colors ${
+            isLeftSidebarOpen && activePanel === 'immersion'
+              ? 'text-orange-400 bg-[#1e1e22]'
+              : 'text-zinc-400 hover:text-orange-300 hover:bg-[#1a1a1d]'
+          }`}
+          title="Marathi Language Immersion & Technical Vocabulary"
+        >
+          <Languages className="w-4 h-4" />
+          {isLeftSidebarOpen && activePanel === 'immersion' && (
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-orange-500 rounded-r" />
+          )}
+        </button>
+
+        {/* Academic & Formula Reference Hub */}
+        {onOpenGateDashboard && (
+          <button
+            onClick={onOpenGateDashboard}
+            className="p-2 rounded-md text-zinc-400 hover:text-purple-400 hover:bg-[#1a1a1d] transition-colors"
+            title="Formula Reference & Numerical Solver Hub"
+          >
+            <Calculator className="w-4 h-4" />
+          </button>
+        )}
 
         {/* Academic Review & Feedback Dashboard */}
         {onOpenReviewDashboard && (

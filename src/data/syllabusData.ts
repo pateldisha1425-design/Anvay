@@ -1,14 +1,15 @@
 import { TopicNode, RelationshipEdge, FolderItem } from '../types/knowledge';
 
 export const INITIAL_FOLDERS: FolderItem[] = [
-  { id: '01-oxides', name: '01 Oxides', order: 1 },
-  { id: '02-polymers', name: '02 Polymers', order: 2 },
-  { id: '03-conducting-polymers', name: '03 Conducting Polymers', order: 3 },
-  { id: '04-nanomaterials', name: '04 Nanotechnology and Nanomaterials', order: 4 },
-  { id: '05-synthesis-nanomaterials', name: '05 Synthesis of Nanomaterials', order: 5 },
-  { id: '06-oleds', name: '06 OLEDs', order: 6 },
-  { id: 'personal', name: 'Personal Notes', order: 7 },
-  { id: 'unsorted', name: 'Unsorted Notes', order: 8 },
+  { id: 'functional-materials', name: 'Functional Materials', order: 1 },
+  { id: '01-oxides', name: '01 Oxides', parentId: 'functional-materials', order: 1 },
+  { id: '02-polymers', name: '02 Polymers', parentId: 'functional-materials', order: 2 },
+  { id: '03-conducting-polymers', name: '03 Conducting Polymers', parentId: 'functional-materials', order: 3 },
+  { id: '04-nanomaterials', name: '04 Nanotechnology and Nanomaterials', parentId: 'functional-materials', order: 4 },
+  { id: '05-synthesis-nanomaterials', name: '05 Synthesis of Nanomaterials', parentId: 'functional-materials', order: 5 },
+  { id: '06-oleds', name: '06 OLEDs', parentId: 'functional-materials', order: 6 },
+  { id: 'personal', name: 'Personal Notes', order: 2 },
+  { id: 'unsorted', name: 'Unsorted Notes', order: 3 },
 ];
 
 export const INITIAL_TOPICS: TopicNode[] = [

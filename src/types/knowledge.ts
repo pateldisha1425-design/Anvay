@@ -60,9 +60,9 @@ export interface FolderItem {
 }
 
 export interface TabItem {
-  id: string; // usually note ID, 'graph-view', or 'review-dashboard'
+  id: string; // usually note ID, 'graph-view', 'review-dashboard', or 'gate-reference'
   title: string;
-  type: 'graph' | 'note' | 'review';
+  type: 'graph' | 'note' | 'review' | 'gate';
   isDirty?: boolean;
 }
 
@@ -72,4 +72,8 @@ export interface GraphFilterOptions {
   selectedRelationType: RelationshipType | 'all';
   searchQuery: string;
   highlightMode: 'all' | 'immediate' | 'prerequisites' | 'isolated' | 'gaps';
+  hideOrphans?: boolean;
+  graphMode?: 'global' | 'local';
+  localDepth?: number;
+  colorGroupBy?: 'none' | 'folder' | 'status' | 'category';
 }
